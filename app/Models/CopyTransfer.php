@@ -100,8 +100,8 @@ class CopyTransfer extends Model
 
     /**
      * Move the book into the given library. The conditional UPDATE makes the link
-     * single use even under concurrent requests. Notes, tags and the gift page
-     * setting belong to the old library and may be private, so they stay behind;
+     * single use even under concurrent requests. Notes, tags, the gift page setting
+     * and finders' messages belong to the old library and may be private, so they stay behind;
      * condition and status belong to the book and move with it. A wish in the new
      * library for this book is over, as when a book is added. Returns false when
      * the link was no longer usable or the book is already in that library.
@@ -129,6 +129,7 @@ class CopyTransfer extends Model
             }
 
             $copy->closeListings();
+            $copy->foundReports()->delete();
             $copy->tags()->detach();
             $copy->forceFill([
                 'library_id' => $library->getKey(),

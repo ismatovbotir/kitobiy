@@ -11,6 +11,7 @@ use Database\Factories\CopyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,7 +27,31 @@ use Illuminate\Support\Facades\DB;
 class Copy extends Model
 {
     /** @use HasFactory<CopyFactory> */
-    use HasFactory;
+    use HasFactory, HasUlids;
+
+    /**
+     * The Book ID: the public link and QR code of this physical book. It can't be
+     * guessed and moves with the book. The integer primary key stays as it is.
+     *
+     * @return list<string>
+     */
+    public function uniqueIds(): array
+    {
+        return ['public_id'];
+    }
+
+    /**
+     * @return HasMany<FoundReport, $this>
+     */
+    public function foundReports(): HasMany
+    {
+        return $this->hasMany(FoundReport::class);
+    }
+
+    public function foundPageUrl(): string
+    {
+        return route('copies.found', $this->public_id);
+    }
 
     /**
      * Get the attributes that should be cast.

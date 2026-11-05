@@ -1,12 +1,14 @@
 <?php
 
 use App\Models\Copy;
+use App\Models\FoundReport;
 use App\Models\Library;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
-new class extends Component {
+new class extends Component
+{
     private const int GIFT_PAGE_PROMPT_MIN_BOOKS = 5;
 
     #[Computed]
@@ -44,6 +46,12 @@ new class extends Component {
             && auth()->user()->can('share', $this->library);
     }
 
+    #[Computed]
+    public function unreadFoundReports(): int
+    {
+        return FoundReport::query()->visibleTo(auth()->user())->whereNull('read_at')->count();
+    }
+
     public function render()
     {
         return $this->view()->title(__('My library'));
@@ -53,6 +61,13 @@ new class extends Component {
 
 <div>
     <x-flash class="mb-6" />
+
+    @if ($this->unreadFoundReports > 0)
+        <p class="mb-6 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            {{ trans_choice(':count new message about a lost book.|:count new messages about lost books.', $this->unreadFoundReports) }}
+            <a href="{{ route('library.found') }}" wire:navigate class="font-medium underline">{{ __('Read') }}</a>
+        </p>
+    @endif
 
     <h1 class="font-serif text-3xl font-semibold">{{ $this->library->name }}</h1>
     <p class="mt-2 text-ink-soft">

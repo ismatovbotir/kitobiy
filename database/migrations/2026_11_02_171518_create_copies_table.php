@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('copies', function (Blueprint $table) {
             $table->id();
+            $table->ulid('public_id')->unique();
             $table->foreignId('library_id')->constrained()->cascadeOnDelete();
             $table->foreignId('edition_id')->constrained()->restrictOnDelete();
             $table->foreignId('added_by')->nullable()->constrained('users')->nullOnDelete();
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->index(['library_id', 'edition_id']);
             $table->index('edition_id');
             $table->index('added_by');
+            $table->index('status');
         });
     }
 

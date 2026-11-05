@@ -43,6 +43,7 @@ class Library extends Model
     {
         return [
             'is_public' => 'boolean',
+            'show_name_to_finders' => 'boolean',
         ];
     }
 

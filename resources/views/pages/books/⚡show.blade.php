@@ -571,6 +571,20 @@ new class extends Component
         </form>
     @endif
 
+    <section class="mt-8 rounded-xl border border-ink/10 bg-white p-4 sm:p-6" x-data="{ copied: false }">
+        <h2 class="font-serif text-xl font-semibold">{{ __('Book ID') }}</h2>
+        <p class="mt-1 text-xs text-ink-soft">{{ __('Each physical book has its own public page. If it gets lost, whoever finds it can write to you from there, without seeing your contact details.') }}</p>
+        <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <input type="text" readonly value="{{ $this->copy->foundPageUrl() }}" aria-label="{{ __('Book ID') }}" class="form-input min-w-0 basis-full text-sm sm:flex-1 sm:basis-0" x-on:focus="$el.select()">
+            <button type="button" class="link shrink-0 text-sm"
+                    x-on:click="navigator.clipboard.writeText(@js($this->copy->foundPageUrl())); copied = true; setTimeout(() => copied = false, 2000)">
+                <span x-show="! copied">{{ __('Copy') }}</span>
+                <span x-show="copied" x-cloak>{{ __('Copied!') }}</span>
+            </button>
+            <a href="{{ $this->copy->foundPageUrl() }}" target="_blank" rel="noopener" class="link shrink-0 text-sm">{{ __('Open') }}</a>
+        </div>
+    </section>
+
     @if ($this->transferHistory->isNotEmpty())
         <section class="mt-8 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
             <h2 class="font-serif text-xl font-semibold">{{ __('History') }}</h2>

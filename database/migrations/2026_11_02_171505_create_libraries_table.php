@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->boolean('is_public')->default(false);
             $table->string('share_token', 32)->nullable()->unique();
+            $table->boolean('show_name_to_finders')->default(false);
             $table->timestamps();
         });
     }

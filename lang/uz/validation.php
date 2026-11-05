@@ -41,6 +41,7 @@ return [
     'unique' => 'Bu :attribute allaqachon band.',
 
     'attributes' => [
+        'contact' => 'aloqa',
         'price' => 'narx',
         'note' => 'izoh',
         'body' => 'xabar',

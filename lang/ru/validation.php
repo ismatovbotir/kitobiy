@@ -41,6 +41,7 @@ return [
     'unique' => 'Значение поля «:attribute» уже занято.',
 
     'attributes' => [
+        'contact' => 'контакт',
         'price' => 'цена',
         'note' => 'заметка',
         'body' => 'сообщение',

@@ -96,6 +96,19 @@ new class extends Component {
         return $this->library->invitations()->pending()->latest('id')->get();
     }
 
+    /**
+     * Whether someone who found a book may see which library it belongs to. Off by
+     * default, because a library's name is often a family name.
+     */
+    public function toggleNameForFinders(): void
+    {
+        $this->authorize('update', $this->library);
+
+        $this->library->forceFill(['show_name_to_finders' => ! $this->library->show_name_to_finders])->save();
+
+        unset($this->library);
+    }
+
     public function rename(): void
     {
         $this->authorize('update', $this->library);
@@ -354,6 +367,20 @@ new class extends Component {
             @endif
         </section>
     @endif
+
+    @can('update', $this->library)
+        <section class="rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
+            <h2 class="font-serif text-xl font-semibold">{{ __('If a book gets lost') }}</h2>
+            <p class="mt-1 text-sm text-ink-soft">{{ $this->library->show_name_to_finders ? __('People who find your book see the name of this library.') : __('People who find your book do not see the name of this library.') }}</p>
+            <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                <button type="button" wire:click="toggleNameForFinders" wire:loading.attr="disabled"
+                        class="min-h-11 cursor-pointer rounded-lg border border-accent px-3 text-sm font-medium text-accent hover:bg-accent hover:text-white">
+                    {{ $this->library->show_name_to_finders ? __('Hide the name') : __('Show the name') }}
+                </button>
+                <a href="{{ route('library.found') }}" wire:navigate class="link text-sm">{{ __('Messages from finders') }}</a>
+            </div>
+        </section>
+    @endcan
 
     @php($isShared = $this->library->isShared())
     <section id="gift-page" class="scroll-mt-6 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">

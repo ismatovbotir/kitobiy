@@ -1,0 +1,65 @@
+<?php
+
+/**
+ * Only the rules Kitobiy uses are translated; anything missing falls back to
+ * English. Add a rule here when a form starts using it.
+ */
+return [
+    'array' => ':Attribute ro‘yxat bo‘lishi kerak.',
+    'between' => [
+        'numeric' => ':Attribute :min va :max orasida bo‘lishi kerak.',
+    ],
+    'confirmed' => ':Attribute tasdig‘i mos kelmadi.',
+    'dimensions' => ':Attribute o‘lchami juda katta yoki juda kichik.',
+    'email' => ':Attribute to‘g‘ri pochta manzili bo‘lishi kerak.',
+    'exists' => 'Tanlangan :attribute yaroqsiz.',
+    'in' => 'Tanlangan :attribute yaroqsiz.',
+    'integer' => ':Attribute butun son bo‘lishi kerak.',
+    'lowercase' => ':Attribute kichik harflarda bo‘lishi kerak.',
+    'max' => [
+        'file' => ':Attribute :max KB dan oshmasligi kerak.',
+        'numeric' => ':Attribute :max dan katta bo‘lmasligi kerak.',
+        'string' => ':Attribute :max belgidan oshmasligi kerak.',
+    ],
+    'mimes' => ':Attribute quyidagi turda bo‘lishi kerak: :values.',
+    'min' => [
+        'numeric' => ':Attribute kamida :min bo‘lishi kerak.',
+        'string' => ':Attribute kamida :min belgidan iborat bo‘lishi kerak.',
+    ],
+    'numeric' => ':Attribute son bo‘lishi kerak.',
+    'password' => [
+        'letters' => ':Attribute kamida bitta harfdan iborat bo‘lishi kerak.',
+        'mixed' => ':Attribute kamida bitta katta va bitta kichik harfdan iborat bo‘lishi kerak.',
+        'numbers' => ':Attribute kamida bitta raqamdan iborat bo‘lishi kerak.',
+        'symbols' => ':Attribute kamida bitta belgidan iborat bo‘lishi kerak.',
+        'uncompromised' => 'Bu :attribute ma’lumotlar sizib chiqishida uchragan. Boshqasini tanlang.',
+    ],
+    'required' => ':Attribute maydonini to‘ldiring.',
+    'string' => ':Attribute matn bo‘lishi kerak.',
+    'unique' => 'Bu :attribute allaqachon band.',
+
+    'attributes' => [
+        'coverPhoto' => 'muqova rasmi',
+        'isbn' => 'ISBN',
+        'title' => 'nomi',
+        'subtitle' => 'qo‘shimcha nom',
+        'author' => 'muallif',
+        'authors' => 'mualliflar',
+        'language' => 'til',
+        'translators' => 'tarjimonlar',
+        'compilers' => 'tuzuvchilar',
+        'editors' => 'muharrirlar',
+        'illustrators' => 'rassomlar',
+        'publisher' => 'nashriyot',
+        'publishedYear' => 'yil',
+        'pageCount' => 'sahifalar',
+        'tagIds.*' => 'teg',
+        'newTag' => 'teg',
+        'notes' => 'izoh',
+        'inviteEmail' => 'pochta',
+        'libraryName' => 'kutubxona nomi',
+        'email' => 'pochta',
+        'name' => 'ism',
+        'password' => 'parol',
+    ],
+];

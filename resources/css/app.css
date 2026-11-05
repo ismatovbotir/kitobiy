@@ -1,0 +1,38 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+    --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, ui-serif, serif;
+
+    --color-paper: #faf6ee;
+    --color-ink: #2b2620;
+    --color-ink-soft: #6b6157;
+    --color-accent: #b5562f;
+    --color-accent-dark: #93421f;
+}
+
+@layer components {
+    .form-label {
+        @apply mb-1 block text-sm font-medium text-ink;
+    }
+
+    .form-input {
+        @apply block w-full rounded-lg border border-ink/20 bg-white px-3 py-2 text-ink shadow-xs outline-none focus:border-accent focus:ring-2 focus:ring-accent/20;
+    }
+
+    .form-error {
+        @apply mt-1 text-sm text-red-700;
+    }
+
+    .btn-primary {
+        @apply inline-flex w-full items-center justify-center rounded-lg bg-accent px-4 py-2.5 font-semibold text-white transition hover:bg-accent-dark disabled:opacity-60;
+    }
+
+    .link {
+        @apply font-medium text-accent underline-offset-2 hover:underline;
+    }
+}

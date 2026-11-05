@@ -1,0 +1,150 @@
+<?php
+
+namespace App\Models;
+
+use App\Support\SearchKey;
+use Database\Factories\CopyFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Query\Builder as QueryBuilder;
+
+/**
+ * One physical book in one library.
+ */
+#[Fillable(['library_id', 'edition_id', 'added_by', 'notes'])]
+class Copy extends Model
+{
+    /** @use HasFactory<CopyFactory> */
+    use HasFactory;
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'hidden_from_gift_page' => 'boolean',
+        ];
+    }
+
+    /**
+     * Friends see editions, not copies, so hiding counts for the whole edition
+     * in this library: one hidden copy keeps the book off the gift page.
+     */
+    public function isHiddenFromGiftPage(): bool
+    {
+        return $this->library->copies()
+            ->where('edition_id', $this->edition_id)
+            ->where('hidden_from_gift_page', true)
+            ->exists();
+    }
+
+    public function setHiddenFromGiftPage(bool $hidden): void
+    {
+        $this->library->copies()
+            ->where('edition_id', $this->edition_id)
+            ->update(['hidden_from_gift_page' => $hidden]);
+    }
+
+    /**
+     * @return BelongsTo<Library, $this>
+     */
+    public function library(): BelongsTo
+    {
+        return $this->belongsTo(Library::class);
+    }
+
+    /**
+     * @return BelongsTo<Edition, $this>
+     */
+    public function edition(): BelongsTo
+    {
+        return $this->belongsTo(Edition::class);
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function addedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'added_by');
+    }
+
+    /**
+     * @return BelongsToMany<Tag, $this>
+     */
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class);
+    }
+
+    /**
+     * Copies that share their edition with another copy in the same library.
+     * Correlated EXISTS backed by the (library_id, edition_id) index.
+     *
+     * @param  Builder<Copy>  $query
+     */
+    #[Scope]
+    protected function exactDuplicates(Builder $query): void
+    {
+        $query->whereExists(fn (QueryBuilder $other) => $other
+            ->selectRaw('1')
+            ->from('copies as other_copies')
+            ->whereColumn('other_copies.library_id', $this->qualifyColumn('library_id'))
+            ->whereColumn('other_copies.edition_id', $this->qualifyColumn('edition_id'))
+            ->whereColumn('other_copies.id', '!=', $this->qualifyColumn('id')));
+    }
+
+    /**
+     * Copies whose edition belongs to a work that the same library also holds
+     * in a different edition (e.g. original and translation). Editions without
+     * a work never match.
+     *
+     * @param  Builder<Copy>  $query
+     */
+    #[Scope]
+    protected function sameWorkDuplicates(Builder $query): void
+    {
+        $query->whereExists(fn (QueryBuilder $other) => $other
+            ->selectRaw('1')
+            ->from('copies as other_copies')
+            ->join('editions as other_editions', 'other_editions.id', '=', 'other_copies.edition_id')
+            ->join('editions as own_editions', 'own_editions.work_id', '=', 'other_editions.work_id')
+            ->whereColumn('own_editions.id', $this->qualifyColumn('edition_id'))
+            ->whereColumn('other_copies.library_id', $this->qualifyColumn('library_id'))
+            ->whereColumn('other_copies.edition_id', '!=', $this->qualifyColumn('edition_id')));
+    }
+
+    /**
+     * Copies whose edition matches the search term by title, subtitle, any
+     * contributor (author, translator…, also by alias) or ISBN. Text is compared
+     * as folded SearchKeys, so case, apostrophes and Latin/Cyrillic don't matter.
+     *
+     * @param  Builder<Copy>  $query
+     */
+    #[Scope]
+    protected function matching(Builder $query, string $term): void
+    {
+        $term = trim($term);
+
+        if ($term === '') {
+            return;
+        }
+
+        $pattern = SearchKey::containsPattern($term);
+        $isbn = Edition::normalizeIsbn($term) ?? '';
+
+        $query->whereHas('edition', fn (Builder $edition) => $edition
+            ->whereLike('search_text', $pattern ?? '')
+            ->orWhere('isbn_13', $isbn)
+            ->orWhere('isbn_10', $isbn)
+            ->orWhereHas('contributors', fn (Builder $person) => $person->nameOrAliasContains($term)));
+    }
+}

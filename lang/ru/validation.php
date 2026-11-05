@@ -1,0 +1,65 @@
+<?php
+
+/**
+ * Only the rules Kitobiy uses are translated; anything missing falls back to
+ * English. Add a rule here when a form starts using it.
+ */
+return [
+    'array' => 'Поле «:attribute» должно быть списком.',
+    'between' => [
+        'numeric' => 'Поле «:attribute» должно быть между :min и :max.',
+    ],
+    'confirmed' => 'Поле «:attribute» не совпадает с подтверждением.',
+    'dimensions' => 'Размер изображения в поле «:attribute» слишком большой или слишком маленький.',
+    'email' => 'Поле «:attribute» должно быть корректным адресом почты.',
+    'exists' => 'Выбранное значение поля «:attribute» недопустимо.',
+    'in' => 'Выбранное значение поля «:attribute» недопустимо.',
+    'integer' => 'Поле «:attribute» должно быть целым числом.',
+    'lowercase' => 'Поле «:attribute» должно быть в нижнем регистре.',
+    'max' => [
+        'file' => 'Файл в поле «:attribute» не должен быть больше :max КБ.',
+        'numeric' => 'Поле «:attribute» не должно быть больше :max.',
+        'string' => 'Поле «:attribute» не должно быть длиннее :max символов.',
+    ],
+    'mimes' => 'Файл в поле «:attribute» должен быть одного из типов: :values.',
+    'min' => [
+        'numeric' => 'Поле «:attribute» должно быть не меньше :min.',
+        'string' => 'Поле «:attribute» должно содержать не менее :min символов.',
+    ],
+    'numeric' => 'Поле «:attribute» должно быть числом.',
+    'password' => [
+        'letters' => 'Поле «:attribute» должно содержать хотя бы одну букву.',
+        'mixed' => 'Поле «:attribute» должно содержать заглавную и строчную буквы.',
+        'numbers' => 'Поле «:attribute» должно содержать хотя бы одну цифру.',
+        'symbols' => 'Поле «:attribute» должно содержать хотя бы один символ.',
+        'uncompromised' => 'Значение поля «:attribute» встречалось в утечках данных. Выберите другое.',
+    ],
+    'required' => 'Заполните поле «:attribute».',
+    'string' => 'Поле «:attribute» должно быть строкой.',
+    'unique' => 'Значение поля «:attribute» уже занято.',
+
+    'attributes' => [
+        'coverPhoto' => 'фото обложки',
+        'isbn' => 'ISBN',
+        'title' => 'название',
+        'subtitle' => 'подзаголовок',
+        'author' => 'автор',
+        'authors' => 'авторы',
+        'language' => 'язык',
+        'translators' => 'переводчики',
+        'compilers' => 'составители',
+        'editors' => 'редакторы',
+        'illustrators' => 'художники',
+        'publisher' => 'издательство',
+        'publishedYear' => 'год',
+        'pageCount' => 'страниц',
+        'tagIds.*' => 'метка',
+        'newTag' => 'метка',
+        'notes' => 'заметки',
+        'inviteEmail' => 'почта',
+        'libraryName' => 'название библиотеки',
+        'email' => 'почта',
+        'name' => 'имя',
+        'password' => 'пароль',
+    ],
+];

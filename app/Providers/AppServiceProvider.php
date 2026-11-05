@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\Listing;
+use App\Models\Message;
 use App\Models\User;
 use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -25,6 +28,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         URL::forceHttps($this->app->isProduction());
+
+        Relation::morphMap([
+            'listing' => Listing::class,
+            'message' => Message::class,
+        ]);
 
         // The /admin area: shared reference data (authors, publishers, genres) and imports.
         Gate::define('super-admin', fn (User $user): bool => $user->isSuperAdmin());

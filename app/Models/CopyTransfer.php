@@ -128,6 +128,7 @@ class CopyTransfer extends Model
                 return false;
             }
 
+            $copy->closeListings();
             $copy->tags()->detach();
             $copy->forceFill([
                 'library_id' => $library->getKey(),

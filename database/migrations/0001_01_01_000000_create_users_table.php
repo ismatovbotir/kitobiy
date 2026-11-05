@@ -18,6 +18,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->boolean('is_super_admin')->default(false);
+            $table->timestamp('suspended_at')->nullable();
             // The library the user works in. No FK: libraries are created later; User::currentLibrary() ignores a stale id.
             $table->unsignedBigInteger('current_library_id')->nullable();
             $table->rememberToken();

@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\BookCondition;
 use App\Enums\CopyStatus;
+use App\Enums\ListingKind;
+use App\Enums\ListingStatus;
 use App\Support\SearchKey;
 use Database\Factories\CopyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -50,9 +52,57 @@ class Copy extends Model
         'status' => 'available',
     ];
 
+    /**
+     * A deleted book can't be sold. The listing itself stays, so its conversations
+     * and reports survive.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(fn (Copy $copy) => $copy->closeListings());
+    }
+
     public function isLost(): bool
     {
         return $this->status === CopyStatus::Lost;
+    }
+
+    /**
+     * @return HasMany<Listing, $this>
+     */
+    public function listings(): HasMany
+    {
+        return $this->hasMany(Listing::class);
+    }
+
+    public function activeListing(): ?Listing
+    {
+        return $this->listings()->where('status', ListingStatus::Active)->latest('id')->first();
+    }
+
+    /**
+     * Offer this book, or return the listing already open for it, so one book
+     * is never on offer twice.
+     */
+    public function createListing(User $seller, ListingKind $kind, ?int $price, ?string $note): Listing
+    {
+        return DB::transaction(function () use ($seller, $kind, $price, $note): Listing {
+            static::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail();
+
+            return $this->activeListing() ?? $this->listings()->create([
+                'seller_id' => $seller->getKey(),
+                'title' => $this->edition->title,
+                'kind' => $kind,
+                'price' => $kind === ListingKind::Sell ? $price : null,
+                'note' => $note,
+            ]);
+        });
+    }
+
+    public function closeListings(): void
+    {
+        $this->listings()
+            ->where('status', ListingStatus::Active)
+            ->update(['status' => ListingStatus::Closed, 'closed_at' => now()]);
     }
 
     /**

@@ -37,6 +37,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_super_admin' => 'boolean',
+            'suspended_at' => 'datetime',
             'current_library_id' => 'integer',
         ];
     }
@@ -63,6 +64,94 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     public function collectorProfile(): HasOne
     {
         return $this->hasOne(CollectorProfile::class);
+    }
+
+    /**
+     * The name other people see on the market. Never the account name, so nobody
+     * shows their full name by accident.
+     */
+    public function marketName(): string
+    {
+        return $this->collectorProfile?->display_name ?? __('Someone');
+    }
+
+    /**
+     * Offering books and sending messages need a name to show, and no suspension.
+     */
+    public function canUseMarket(): bool
+    {
+        return ! $this->isSuspended() && $this->collectorProfile()->exists();
+    }
+
+    public function isSuspended(): bool
+    {
+        return $this->suspended_at !== null;
+    }
+
+    /**
+     * A suspended user keeps their own library but disappears from the market.
+     */
+    public function suspend(): void
+    {
+        $this->forceFill(['suspended_at' => now()])->save();
+    }
+
+    public function restoreFromSuspension(): void
+    {
+        $this->forceFill(['suspended_at' => null])->save();
+    }
+
+    /**
+     * @return BelongsToMany<User, $this>
+     */
+    public function blockedUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'user_blocks', 'blocker_id', 'blocked_id')->withTimestamps();
+    }
+
+    public function block(User $other): void
+    {
+        if ($other->isNot($this)) {
+            $this->blockedUsers()->syncWithoutDetaching([$other->getKey()]);
+        }
+    }
+
+    public function unblock(User $other): void
+    {
+        $this->blockedUsers()->detach($other->getKey());
+    }
+
+    public function hasBlockWith(User $other): bool
+    {
+        return DB::table('user_blocks')
+            ->where(fn ($query) => $query->where('blocker_id', $this->getKey())->where('blocked_id', $other->getKey()))
+            ->orWhere(fn ($query) => $query->where('blocker_id', $other->getKey())->where('blocked_id', $this->getKey()))
+            ->exists();
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function blockedUserIdsBothWays(): array
+    {
+        return DB::table('user_blocks')
+            ->where('blocker_id', $this->getKey())
+            ->pluck('blocked_id')
+            ->merge(DB::table('user_blocks')->where('blocked_id', $this->getKey())->pluck('blocker_id'))
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    public function unreadMessagesCount(): int
+    {
+        return Message::query()
+            ->whereNull('read_at')
+            ->whereNull('hidden_at')
+            ->where('sender_id', '!=', $this->getKey())
+            ->whereHas('conversation', fn ($conversation) => $conversation->involving($this))
+            ->count();
     }
 
     /**

@@ -7,6 +7,8 @@
         ['route' => 'books.duplicates', 'active' => 'books.duplicates', 'label' => __('Duplicates')],
         ['route' => 'library.wishlist', 'active' => 'library.wishlist', 'label' => __('Wishlist')],
         ['route' => 'library.members', 'active' => 'library.members', 'label' => __('Family')],
+        ['route' => 'market.index', 'active' => ['market.index', 'market.show', 'market.create'], 'label' => __('Market')],
+        ['route' => 'messages.index', 'active' => ['messages.index', 'messages.show'], 'label' => __('Messages'), 'badge' => auth()->user()->unreadMessagesCount()],
         ['route' => 'profile.edit', 'active' => 'profile.edit', 'label' => __('Profile')],
     ];
     $links = array_filter($links, fn (array $link): bool => $link['show'] ?? true);
@@ -23,7 +25,7 @@
                        'inline-block border-b-2 px-3 py-2 transition',
                        'border-accent font-semibold text-ink' => $isActive,
                        'border-transparent text-ink-soft hover:text-ink' => ! $isActive,
-                   ])>{{ $link['label'] }}</a>
+                   ])>{{ $link['label'] }}@if ($link['badge'] ?? 0) <span class="ml-1 rounded-full bg-accent px-1.5 text-xs font-semibold text-white">{{ $link['badge'] }}</span>@endif</a>
             </li>
         @endforeach
     </ul>

@@ -40,6 +40,15 @@ class CopyPolicy
     }
 
     /**
+     * Everyone who catalogs may offer a book for sale or swap, unless it is lost
+     * or they are suspended.
+     */
+    public function createListing(User $user, Copy $copy): bool
+    {
+        return $this->update($user, $copy) && ! $copy->isLost() && ! $user->isSuspended();
+    }
+
+    /**
      * The shared catalog entry may be corrected only while no other library
      * holds this edition, so one family's fix never changes another's books.
      */

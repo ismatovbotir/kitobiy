@@ -14,6 +14,8 @@ return [
     'email' => ':Attribute to‘g‘ri pochta manzili bo‘lishi kerak.',
     'exists' => 'Tanlangan :attribute yaroqsiz.',
     'in' => 'Tanlangan :attribute yaroqsiz.',
+    'enum' => 'Tanlangan :attribute noto‘g‘ri.',
+    'required_if' => ':Attribute maydonini to‘ldiring.',
     'integer' => ':Attribute butun son bo‘lishi kerak.',
     'lowercase' => ':Attribute kichik harflarda bo‘lishi kerak.',
     'max' => [
@@ -39,6 +41,17 @@ return [
     'unique' => 'Bu :attribute allaqachon band.',
 
     'attributes' => [
+        'price' => 'narx',
+        'note' => 'izoh',
+        'body' => 'xabar',
+        'reason' => 'sabab',
+        'details' => 'batafsil',
+        'displayName' => 'ism',
+        'bio' => 'matn',
+        'condition' => 'kitob holati',
+        'status' => 'holat',
+        'kind' => 'tur',
+        'libraryId' => 'kutubxona',
         'coverPhoto' => 'muqova rasmi',
         'isbn' => 'ISBN',
         'title' => 'nomi',

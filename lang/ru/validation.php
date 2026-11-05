@@ -14,6 +14,8 @@ return [
     'email' => 'Поле «:attribute» должно быть корректным адресом почты.',
     'exists' => 'Выбранное значение поля «:attribute» недопустимо.',
     'in' => 'Выбранное значение поля «:attribute» недопустимо.',
+    'enum' => 'Выбрано неверное значение поля «:attribute».',
+    'required_if' => 'Заполните поле «:attribute».',
     'integer' => 'Поле «:attribute» должно быть целым числом.',
     'lowercase' => 'Поле «:attribute» должно быть в нижнем регистре.',
     'max' => [
@@ -39,6 +41,17 @@ return [
     'unique' => 'Значение поля «:attribute» уже занято.',
 
     'attributes' => [
+        'price' => 'цена',
+        'note' => 'заметка',
+        'body' => 'сообщение',
+        'reason' => 'причина',
+        'details' => 'подробности',
+        'displayName' => 'имя',
+        'bio' => 'текст',
+        'condition' => 'состояние',
+        'status' => 'статус',
+        'kind' => 'тип',
+        'libraryId' => 'библиотека',
         'coverPhoto' => 'фото обложки',
         'isbn' => 'ISBN',
         'title' => 'название',

@@ -1,7 +1,9 @@
 <?php
 
 use App\Models\CollectorProfile;
+use App\Models\User;
 use App\Rules\NoContactDetails;
+use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -68,6 +70,22 @@ new class extends Component
         session()->flash('status', __('Profile is off. The link no longer works.'));
     }
 
+    /**
+     * @return Collection<int, User>
+     */
+    #[Computed]
+    public function blockedUsers(): Collection
+    {
+        return auth()->user()->blockedUsers()->with('collectorProfile')->get();
+    }
+
+    public function unblock(int $userId): void
+    {
+        auth()->user()->blockedUsers()->detach($userId);
+
+        unset($this->blockedUsers);
+    }
+
     public function render()
     {
         return $this->view()->title(__('Collector profile'));
@@ -122,4 +140,18 @@ new class extends Component
             @endif
         @endif
     </section>
+
+    @if ($this->blockedUsers->isNotEmpty())
+        <section class="mt-6 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
+            <h2 class="font-serif text-xl font-semibold">{{ __('People you blocked') }}</h2>
+            <ul class="mt-2 divide-y divide-ink/10">
+                @foreach ($this->blockedUsers as $blockedUser)
+                    <li wire:key="blocked-{{ $blockedUser->id }}" class="flex items-center justify-between gap-3 py-2 text-sm">
+                        <span class="min-w-0 truncate">{{ $blockedUser->marketName() }}</span>
+                        <button type="button" wire:click="unblock({{ $blockedUser->id }})" class="link shrink-0">{{ __('Unblock') }}</button>
+                    </li>
+                @endforeach
+            </ul>
+        </section>
+    @endif
 </div>

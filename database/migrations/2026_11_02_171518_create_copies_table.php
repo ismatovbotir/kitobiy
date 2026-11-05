@@ -18,6 +18,8 @@ return new class extends Migration
             $table->foreignId('added_by')->nullable()->constrained('users')->nullOnDelete();
             $table->text('notes')->nullable();
             $table->boolean('hidden_from_gift_page')->default(false);
+            $table->string('condition', 16)->nullable();
+            $table->string('status', 16)->default('available');
             $table->timestamps();
 
             $table->index(['library_id', 'edition_id']);

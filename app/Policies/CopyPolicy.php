@@ -32,6 +32,14 @@ class CopyPolicy
     }
 
     /**
+     * Everyone who catalogs may give a book to another library, unless it is lost.
+     */
+    public function transfer(User $user, Copy $copy): bool
+    {
+        return $this->update($user, $copy) && ! $copy->isLost();
+    }
+
+    /**
      * The shared catalog entry may be corrected only while no other library
      * holds this edition, so one family's fix never changes another's books.
      */

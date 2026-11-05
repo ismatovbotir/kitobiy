@@ -1,7 +1,10 @@
 <?php
 
+use App\Enums\BookCondition;
 use App\Enums\ContributorRole;
+use App\Enums\CopyStatus;
 use App\Models\Copy;
+use App\Models\CopyTransfer;
 use App\Models\Edition;
 use App\Services\CoverImage;
 use App\Support\Concerns\SuggestsContributorNames;
@@ -15,7 +18,8 @@ use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 
-new class extends Component {
+new class extends Component
+{
     use SuggestsContributorNames, SuggestsPublisherNames, WithFileUploads;
 
     public Copy $copy;
@@ -28,6 +32,10 @@ new class extends Component {
     public string $newTag = '';
 
     public string $notes = '';
+
+    public string $condition = '';
+
+    public string $status = '';
 
     public bool $editingEdition = false;
 
@@ -66,6 +74,8 @@ new class extends Component {
         $this->genres = $copy->edition->genres->pluck('slug')->all();
         $this->tagIds = $copy->tags()->pluck('tags.id')->map(fn (int $id): string => (string) $id)->all();
         $this->notes = (string) $copy->notes;
+        $this->condition = (string) $copy->condition?->value;
+        $this->status = $copy->status->value;
     }
 
     #[Computed]
@@ -186,6 +196,8 @@ new class extends Component {
             'tagIds.*' => ['integer', Rule::exists('tags', 'id')->where('library_id', $libraryId)],
             'newTag' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'condition' => ['nullable', Rule::enum(BookCondition::class)],
+            'status' => ['required', Rule::enum(CopyStatus::class)],
         ]);
 
         DB::transaction(function (): void {
@@ -199,16 +211,63 @@ new class extends Component {
 
             $this->copy->update([
                 'notes' => trim($this->notes) ?: null,
+                'condition' => $this->condition ?: null,
+                'status' => $this->status,
             ]);
 
             $this->copy->tags()->sync(array_unique($tagIds));
+
+            if ($this->copy->isLost()) {
+                $this->copy->pendingTransfer()?->cancel();
+            }
         });
 
         $this->tagIds = $this->copy->tags()->pluck('tags.id')->map(fn (int $id): string => (string) $id)->all();
         $this->reset('newTag');
-        unset($this->tags);
+        unset($this->tags, $this->pendingTransfer, $this->canTransfer);
 
         session()->flash('status', __('Changes saved.'));
+    }
+
+    #[Computed]
+    public function canTransfer(): bool
+    {
+        return auth()->user()->can('transfer', $this->copy);
+    }
+
+    #[Computed]
+    public function pendingTransfer(): ?CopyTransfer
+    {
+        return $this->copy->pendingTransfer();
+    }
+
+    /**
+     * @return Collection<int, CopyTransfer>
+     */
+    #[Computed]
+    public function transferHistory(): Collection
+    {
+        return $this->copy->transferHistory()->get();
+    }
+
+    public function offerTransfer(): void
+    {
+        $this->authorize('transfer', $this->copy);
+
+        $this->copy->offerTransfer(auth()->user());
+
+        unset($this->pendingTransfer);
+    }
+
+    public function cancelTransfer(): void
+    {
+        $this->authorize('update', $this->copy);
+
+        $this->pendingTransfer?->cancel();
+
+        unset($this->pendingTransfer);
+
+        session()->flash('status', __('Giving cancelled.'));
     }
 
     #[Computed]
@@ -511,9 +570,26 @@ new class extends Component {
         </form>
     @endif
 
+    @if ($this->transferHistory->isNotEmpty())
+        <section class="mt-8 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
+            <h2 class="font-serif text-xl font-semibold">{{ __('History') }}</h2>
+            <ul class="mt-2 space-y-1 text-sm">
+                @foreach ($this->transferHistory as $transfer)
+                    <li wire:key="history-{{ $transfer->id }}">{{ __('From :library, :date', ['library' => $transfer->from_library_name, 'date' => $transfer->accepted_at->toDateString()]) }}</li>
+                @endforeach
+            </ul>
+        </section>
+    @endif
+
     @if (! $this->canEditCopy)
         <section class="mt-8 space-y-3 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
             <h2 class="font-serif text-xl font-semibold">{{ __('About this copy') }}</h2>
+            <p class="text-sm">
+                {{ __('Status') }}: {{ $this->copy->status->label() }}
+                @if ($this->copy->condition)
+                    · {{ __('Condition') }}: {{ $this->copy->condition->label() }}
+                @endif
+            </p>
             @if ($this->copy->tags->isNotEmpty())
                 <div class="flex flex-wrap gap-2">
                     @foreach ($this->copy->tags as $tag)
@@ -559,6 +635,28 @@ new class extends Component {
             <label for="notes" class="form-label">{{ __('Notes') }}</label>
             <textarea wire:model="notes" id="notes" rows="2" maxlength="2000" placeholder="{{ __('e.g. Gift from grandmother, signed by the author') }}" class="form-input"></textarea>
             @error('notes') <p class="form-error">{{ $message }}</p> @enderror
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+            <div>
+                <label for="condition" class="form-label">{{ __('Condition') }}</label>
+                <select wire:model="condition" id="condition" class="form-input">
+                    <option value="">{{ __('Not set') }}</option>
+                    @foreach (BookCondition::cases() as $bookCondition)
+                        <option wire:key="condition-{{ $bookCondition->value }}" value="{{ $bookCondition->value }}">{{ $bookCondition->label() }}</option>
+                    @endforeach
+                </select>
+                @error('condition') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
+            <div>
+                <label for="status" class="form-label">{{ __('Status') }}</label>
+                <select wire:model="status" id="status" class="form-input">
+                    @foreach (CopyStatus::cases() as $copyStatus)
+                        <option wire:key="status-{{ $copyStatus->value }}" value="{{ $copyStatus->value }}">{{ $copyStatus->label() }}</option>
+                    @endforeach
+                </select>
+                @error('status') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
         </div>
 
         <button type="submit" class="btn-primary sm:w-auto" wire:loading.attr="disabled" wire:target="saveCopy">{{ __('Save') }}</button>
@@ -620,11 +718,39 @@ new class extends Component {
         @endif
     </section>
 
+    <section class="mt-8 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
+        <h2 class="font-serif text-xl font-semibold">{{ __('Give to another library') }}</h2>
+        <p class="mt-2 text-xs text-ink-soft">{{ __('Your notes, tags and gift page setting stay behind. The new owner sees the book, its condition and the names of the libraries it came from.') }}</p>
+
+        @if ($this->pendingTransfer)
+            @php($transferUrl = route('transfers.show', $this->pendingTransfer->token))
+            <div class="mt-3" x-data="{ copied: false }">
+                <p class="text-sm">{{ __('Send this link to the new owner. It works once and expires on :date. The book stays here until they accept.', ['date' => $this->pendingTransfer->expires_at->toDateString()]) }}</p>
+                <div class="mt-2 flex gap-2">
+                    <input type="text" readonly value="{{ $transferUrl }}" aria-label="{{ __('Give to another library') }}" class="form-input text-sm" x-on:focus="$el.select()">
+                    <button type="button" class="shrink-0 text-sm link"
+                            x-on:click="navigator.clipboard.writeText(@js($transferUrl)); copied = true; setTimeout(() => copied = false, 2000)">
+                        <span x-show="! copied">{{ __('Copy') }}</span>
+                        <span x-show="copied" x-cloak>{{ __('Copied!') }}</span>
+                    </button>
+                    <button type="button" wire:click="cancelTransfer" class="shrink-0 text-sm text-red-700 hover:underline">{{ __('Cancel') }}</button>
+                </div>
+            </div>
+        @elseif ($this->canTransfer)
+            <button type="button" wire:click="offerTransfer" wire:loading.attr="disabled" wire:target="offerTransfer"
+                    class="mt-3 min-h-11 cursor-pointer rounded-lg border border-accent px-3 text-sm font-medium text-accent hover:bg-accent hover:text-white">
+                {{ __('Create a link') }}
+            </button>
+        @else
+            <p class="mt-3 text-sm text-ink-soft">{{ __('Lost books cannot be given away.') }}</p>
+        @endif
+    </section>
+
     <div class="mt-8 border-t border-ink/10 pt-6">
         <button type="button" wire:click="delete"
                 wire:confirm="{{ __('Remove this book from your library?') }}"
                 class="text-sm font-medium text-red-700 hover:underline">{{ __('Remove from library') }}</button>
-        <p class="mt-1 text-xs text-ink-soft">{{ __('Use this when the book was given away, lost or added by mistake.') }}</p>
+        <p class="mt-1 text-xs text-ink-soft">{{ __('Use this when the book was added by mistake or is no longer yours.') }}</p>
     </div>
     @endif
 </div>

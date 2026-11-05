@@ -1,0 +1,125 @@
+<?php
+
+use App\Models\CollectorProfile;
+use App\Rules\NoContactDetails;
+use Livewire\Attributes\Computed;
+use Livewire\Component;
+
+/**
+ * The user's own collector profile. The name is typed here on purpose instead
+ * of starting from the account name, so nobody publishes their full name by accident.
+ */
+new class extends Component
+{
+    public string $displayName = '';
+
+    public string $bio = '';
+
+    public function mount(): void
+    {
+        $this->displayName = (string) $this->profile?->display_name;
+        $this->bio = (string) $this->profile?->bio;
+    }
+
+    #[Computed]
+    public function profile(): ?CollectorProfile
+    {
+        return auth()->user()->collectorProfile()->first();
+    }
+
+    public function save(): void
+    {
+        $validated = $this->validate([
+            'displayName' => ['required', 'string', 'max:60', new NoContactDetails],
+            'bio' => ['nullable', 'string', 'max:500', new NoContactDetails],
+        ]);
+
+        auth()->user()->collectorProfile()->updateOrCreate([], [
+            'display_name' => trim($validated['displayName']),
+            'bio' => trim((string) $validated['bio']) ?: null,
+        ]);
+
+        unset($this->profile);
+
+        session()->flash('status', __('Changes saved.'));
+    }
+
+    public function turnOn(): void
+    {
+        if ($this->profile === null) {
+            $this->addError('displayName', __('Save your profile first.'));
+
+            return;
+        }
+
+        $this->profile->shareWithNewLink();
+
+        unset($this->profile);
+
+        session()->flash('status', __('Profile is on. Copy the link and send it to people you choose.'));
+    }
+
+    public function turnOff(): void
+    {
+        $this->profile?->stopSharing();
+
+        unset($this->profile);
+
+        session()->flash('status', __('Profile is off. The link no longer works.'));
+    }
+
+    public function render()
+    {
+        return $this->view()->title(__('Collector profile'));
+    }
+};
+?>
+
+<div class="max-w-2xl">
+    <h1 class="font-serif text-2xl font-semibold">{{ __('Collector profile') }}</h1>
+    <p class="mt-2 text-sm text-ink-soft">{{ __('A small page about you as a book collector. It is off until you turn it on, and only people with the link can open it. It never shows your email or your account name.') }}</p>
+
+    <x-flash class="mt-4" />
+
+    <form wire:submit="save" class="mt-4 space-y-4 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
+        <div>
+            <label for="displayName" class="form-label">{{ __('Name to show') }}</label>
+            <input wire:model="displayName" id="displayName" type="text" required maxlength="60" class="form-input">
+            @error('displayName') <p class="form-error">{{ $message }}</p> @enderror
+        </div>
+        <div>
+            <label for="bio" class="form-label">{{ __('About you and your books') }}</label>
+            <textarea wire:model="bio" id="bio" rows="3" maxlength="500" placeholder="{{ __('e.g. I collect Uzbek poetry and old dictionaries') }}" class="form-input"></textarea>
+            @error('bio') <p class="form-error">{{ $message }}</p> @enderror
+        </div>
+        <button type="submit" class="btn-primary sm:w-auto" wire:loading.attr="disabled" wire:target="save">{{ __('Save') }}</button>
+    </form>
+
+    <section class="mt-6 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
+        @if ($this->profile?->isShared())
+            @php($profileUrl = $this->profile->shareUrl())
+            <p class="text-sm">{{ __('On. Anyone with the link can see your name and text above.') }}</p>
+            <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2" x-data="{ copied: false }">
+                <input type="text" readonly value="{{ $profileUrl }}" aria-label="{{ __('Collector profile') }}" class="form-input min-w-0 basis-full text-sm sm:flex-1 sm:basis-0" x-on:focus="$el.select()">
+                <button type="button" class="link shrink-0 text-sm"
+                        x-on:click="navigator.clipboard.writeText(@js($profileUrl)); copied = true; setTimeout(() => copied = false, 2000)">
+                    <span x-show="! copied">{{ __('Copy') }}</span>
+                    <span x-show="copied" x-cloak>{{ __('Copied!') }}</span>
+                </button>
+                <a href="{{ $profileUrl }}" target="_blank" rel="noopener" class="link shrink-0 text-sm">{{ __('Open') }}</a>
+            </div>
+            <button type="button" wire:click="turnOff" wire:loading.attr="disabled"
+                    wire:confirm="{{ __('Turn off your profile? The link will stop working, and turning it on again creates a new link.') }}"
+                    class="mt-4 text-sm font-medium text-red-700 hover:underline">{{ __('Turn off') }}</button>
+        @else
+            <p class="text-sm">{{ __('Off. Nobody can see your profile.') }}</p>
+            <button type="button" wire:click="turnOn" wire:loading.attr="disabled" @disabled($this->profile === null)
+                    class="mt-3 min-h-11 cursor-pointer rounded-lg border border-accent px-3 text-sm font-medium text-accent hover:bg-accent hover:text-white disabled:cursor-not-allowed disabled:opacity-50">
+                {{ __('Turn on') }}
+            </button>
+            @if ($this->profile === null)
+                <p class="mt-2 text-xs text-ink-soft">{{ __('Save your profile first.') }}</p>
+            @endif
+        @endif
+    </section>
+</div>

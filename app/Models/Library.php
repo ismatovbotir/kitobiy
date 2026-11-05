@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CopyStatus;
 use App\Enums\LibraryRole;
 use Database\Factories\LibraryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -121,13 +122,16 @@ class Library extends Model
     }
 
     /**
-     * The copies friends may see: every edition with a hidden copy stays off the page.
+     * The copies friends may see: every edition with a hidden copy stays off the
+     * page, and a lost book is no longer on the shelves.
      *
      * @return HasMany<Copy, $this>
      */
     public function giftPageCopies(): HasMany
     {
-        return $this->copies()->whereNotIn('edition_id', $this->copiesHiddenFromGiftPage()->select('edition_id'));
+        return $this->copies()
+            ->where('status', '!=', CopyStatus::Lost)
+            ->whereNotIn('edition_id', $this->copiesHiddenFromGiftPage()->select('edition_id'));
     }
 
     /**

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
@@ -54,6 +55,14 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     public function isSuperAdmin(): bool
     {
         return $this->is_super_admin === true;
+    }
+
+    /**
+     * @return HasOne<CollectorProfile, $this>
+     */
+    public function collectorProfile(): HasOne
+    {
+        return $this->hasOne(CollectorProfile::class);
     }
 
     /**

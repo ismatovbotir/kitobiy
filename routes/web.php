@@ -12,6 +12,8 @@ Route::post('/locale/{locale}', LocaleController::class)->name('locale.update');
 
 Route::livewire('/invitations/{token}', 'pages::invitations.show')->name('invitations.show');
 Route::livewire('/gift/{token}', 'pages::gift.show')->middleware('throttle:60,1')->name('gift.show');
+Route::livewire('/transfers/{token}', 'pages::transfers.show')->middleware('throttle:60,1')->name('transfers.show');
+Route::livewire('/collectors/{token}', 'pages::collectors.show')->middleware('throttle:60,1')->name('collectors.show');
 
 Route::middleware('guest')->group(function () {
     Route::livewire('/login', 'pages::auth.login')->name('login');
@@ -36,6 +38,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('/books/{copy}', 'pages::books.show')->whereNumber('copy')->name('books.show');
     Route::livewire('/library/members', 'pages::library.members')->name('library.members');
     Route::livewire('/library/wishlist', 'pages::library.wishlist')->name('library.wishlist');
+    Route::livewire('/profile', 'pages::profile.edit')->name('profile.edit');
     Route::livewire('/libraries', 'pages::library.index')->name('libraries.index');
     Route::post('/libraries/{library}/switch', SwitchLibraryController::class)->name('libraries.switch');
 });

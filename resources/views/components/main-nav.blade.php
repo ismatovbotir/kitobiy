@@ -7,6 +7,7 @@
         ['route' => 'books.duplicates', 'active' => 'books.duplicates', 'label' => __('Duplicates')],
         ['route' => 'library.wishlist', 'active' => 'library.wishlist', 'label' => __('Wishlist')],
         ['route' => 'library.members', 'active' => 'library.members', 'label' => __('Family')],
+        ['route' => 'profile.edit', 'active' => 'profile.edit', 'label' => __('Profile')],
     ];
     $links = array_filter($links, fn (array $link): bool => $link['show'] ?? true);
 @endphp

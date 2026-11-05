@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\BookCondition;
+use App\Enums\CopyStatus;
 use App\Support\SearchKey;
 use Database\Factories\CopyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -11,12 +13,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * One physical book in one library.
  */
-#[Fillable(['library_id', 'edition_id', 'added_by', 'notes'])]
+#[Fillable(['library_id', 'edition_id', 'added_by', 'notes', 'condition', 'status'])]
 class Copy extends Model
 {
     /** @use HasFactory<CopyFactory> */
@@ -31,7 +35,60 @@ class Copy extends Model
     {
         return [
             'hidden_from_gift_page' => 'boolean',
+            'condition' => BookCondition::class,
+            'status' => CopyStatus::class,
         ];
+    }
+
+    /**
+     * The status column has a database default, which a freshly created model
+     * would not know about until it is reloaded.
+     *
+     * @var array<string, string>
+     */
+    protected $attributes = [
+        'status' => 'available',
+    ];
+
+    public function isLost(): bool
+    {
+        return $this->status === CopyStatus::Lost;
+    }
+
+    /**
+     * Start giving this book away, or return the link already open for it, so
+     * one book never has two links that could send it to two libraries.
+     */
+    public function offerTransfer(User $user): CopyTransfer
+    {
+        return DB::transaction(function () use ($user): CopyTransfer {
+            static::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail();
+
+            return $this->pendingTransfer() ?? $this->transfers()->create(['offered_by' => $user->getKey()]);
+        });
+    }
+
+    public function pendingTransfer(): ?CopyTransfer
+    {
+        return $this->transfers()->pending()->latest('id')->first();
+    }
+
+    /**
+     * @return HasMany<CopyTransfer, $this>
+     */
+    public function transfers(): HasMany
+    {
+        return $this->hasMany(CopyTransfer::class);
+    }
+
+    /**
+     * The libraries this book came from, oldest first.
+     *
+     * @return HasMany<CopyTransfer, $this>
+     */
+    public function transferHistory(): HasMany
+    {
+        return $this->transfers()->whereNotNull('accepted_at')->oldest('accepted_at')->oldest('id');
     }
 
     /**

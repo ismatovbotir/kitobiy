@@ -552,5 +552,20 @@
     "Earlier loans": "Avvalgi berishlar",
     "This book is on loan. It can be offered when it comes back.": "Bu kitob vaqtincha berilgan. U qaytgach taklif qilish mumkin.",
     "This book is on loan. It can be given away when it comes back.": "Bu kitob vaqtincha berilgan. U qaytgach butunlay berish mumkin.",
-    "This book has an open lending link. Cancel it first to give the book away.": "Bu kitobni vaqtincha berish havolasi ochiq. Butunlay berish uchun avval uni bekor qiling."
+    "This book has an open lending link. Cancel it first to give the book away.": "Bu kitobni vaqtincha berish havolasi ochiq. Butunlay berish uchun avval uni bekor qiling.",
+    "Choose books, then print labels on A4 sticker sheets. The QR code on each label opens that book’s public page.": "Kitoblarni tanlang va yorliqlarni A4 stiker varaqlariga chop eting. Har bir yorliqdagi QR kod shu kitobning ochiq sahifasini ochadi.",
+    "No label sizes are available yet.": "Hozircha yorliq o‘lchamlari yo‘q.",
+    "Label size": "Yorliq o‘lchami",
+    ":count label per A4 sheet|:count labels per A4 sheet": "A4 varaqda :count ta yorliq",
+    "Labels already used on the first sheet": "Birinchi varaqda ishlatilgan yorliqlar",
+    ":count book selected|:count books selected": ":count ta kitob tanlandi",
+    "Select all": "Hammasini tanlash",
+    "Clear": "Tozalash",
+    "Up to :count labels at a time.": "Bir martada :count tagacha yorliq.",
+    "Show the sheets": "Varaqlarni ko‘rsatish",
+    "Print or save as PDF": "Chop etish yoki PDF saqlash",
+    "In the print window choose A4, scale 100% and no margins. Print one test sheet on plain paper first and hold it against a sticker sheet.": "Chop etish oynasida A4, 100% masshtab va chetsiz (no margins) ni tanlang. Avval oddiy qog‘ozga bitta sinov varag‘ini chop etib, stiker varag‘iga solishtiring.",
+    "Each QR code holds this site’s address, so print from the live site, not from a test copy.": "Har bir QR kodda shu saytning manzili bor, shuning uchun sinov nusxasidan emas, asosiy saytdan chop eting.",
+    "Print a label": "Yorliq chop etish",
+    "On the label:": "Yorliqda:"
 }

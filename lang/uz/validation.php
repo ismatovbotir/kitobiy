@@ -43,6 +43,10 @@ return [
     'unique' => 'Bu :attribute allaqachon band.',
 
     'attributes' => [
+        'templateId' => 'yorliq o‘lchami',
+        'selectedIds' => 'kitoblar',
+        'selectedIds.*' => 'kitob',
+        'skip' => 'ishlatilgan yorliqlar',
         'borrowerName' => 'ism',
         'borrowerPhone' => 'telefon',
         'dueOn' => 'qaytarish muddati',

@@ -7,6 +7,7 @@
         ['route' => 'books.duplicates', 'active' => 'books.duplicates', 'label' => __('Duplicates')],
         ['route' => 'library.wishlist', 'active' => 'library.wishlist', 'label' => __('Wishlist')],
         ['route' => 'library.members', 'active' => 'library.members', 'label' => __('Family')],
+        ['route' => 'library.labels', 'active' => 'library.labels', 'label' => __('Labels'), 'show' => $canAddBooks],
         ['route' => 'library.loans', 'active' => 'library.loans', 'label' => __('Loans')],
         ['route' => 'market.index', 'active' => ['market.index', 'market.show', 'market.create'], 'label' => __('Market')],
         ['route' => 'messages.index', 'active' => ['messages.index', 'messages.show'], 'label' => __('Messages'), 'badge' => auth()->user()->unreadMessagesCount()],

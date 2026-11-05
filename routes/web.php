@@ -42,6 +42,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('/library/wishlist', 'pages::library.wishlist')->name('library.wishlist');
     Route::livewire('/library/found', 'pages::library.found')->name('library.found');
     Route::livewire('/library/loans', 'pages::library.loans')->name('library.loans');
+    Route::livewire('/library/labels', 'pages::library.labels')->name('library.labels');
     Route::livewire('/books/{copy}/offer', 'pages::market.create')->whereNumber('copy')->name('market.create');
     Route::livewire('/market', 'pages::market.index')->name('market.index');
     Route::livewire('/market/{listing}', 'pages::market.show')->whereNumber('listing')->name('market.show');

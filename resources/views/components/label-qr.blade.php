@@ -1,5 +1,5 @@
 @php
-    // A stand-in QR pattern (21×21 modules) until real codes are generated in Phase 2.
+    // A stand-in QR pattern (21×21 modules) for previews without a real book; printed labels use real codes.
     $size = 21;
     $isFinder = fn (int $x, int $y): bool => ($x < 7 && $y < 7) || ($x >= $size - 7 && $y < 7) || ($x < 7 && $y >= $size - 7);
     $modules = [];

@@ -552,5 +552,20 @@
     "Earlier loans": "Прошлые выдачи",
     "This book is on loan. It can be offered when it comes back.": "Эта книга выдана. Предложить её можно, когда она вернётся.",
     "This book is on loan. It can be given away when it comes back.": "Эта книга выдана. Отдать её можно, когда она вернётся.",
-    "This book has an open lending link. Cancel it first to give the book away.": "Для этой книги открыта ссылка на выдачу. Сначала отмените её."
+    "This book has an open lending link. Cancel it first to give the book away.": "Для этой книги открыта ссылка на выдачу. Сначала отмените её.",
+    "Choose books, then print labels on A4 sticker sheets. The QR code on each label opens that book’s public page.": "Выберите книги и напечатайте этикетки на листах наклеек A4. QR-код на этикетке открывает страницу этой книги.",
+    "No label sizes are available yet.": "Размеров этикеток пока нет.",
+    "Label size": "Размер этикетки",
+    ":count label per A4 sheet|:count labels per A4 sheet": ":count этикетка на листе A4|:count этикетки на листе A4|:count этикеток на листе A4",
+    "Labels already used on the first sheet": "Уже использовано на первом листе",
+    ":count book selected|:count books selected": "Выбрана :count книга|Выбрано :count книги|Выбрано :count книг",
+    "Select all": "Выбрать все",
+    "Clear": "Очистить",
+    "Up to :count labels at a time.": "До :count этикеток за раз.",
+    "Show the sheets": "Показать листы",
+    "Print or save as PDF": "Печать или сохранить в PDF",
+    "In the print window choose A4, scale 100% and no margins. Print one test sheet on plain paper first and hold it against a sticker sheet.": "В окне печати выберите A4, масштаб 100% и без полей. Сначала напечатайте пробный лист на обычной бумаге и приложите его к листу наклеек.",
+    "Each QR code holds this site’s address, so print from the live site, not from a test copy.": "В каждом QR-коде адрес этого сайта, поэтому печатайте с основного сайта, а не с тестовой копии.",
+    "Print a label": "Напечатать этикетку",
+    "On the label:": "На этикетке:"
 }

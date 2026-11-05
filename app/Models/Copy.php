@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\BookCondition;
 use App\Enums\CopyStatus;
+use App\Enums\LabelElement;
 use App\Enums\ListingKind;
 use App\Enums\ListingStatus;
 use App\Support\SearchKey;
@@ -28,6 +29,8 @@ class Copy extends Model
 {
     /** @use HasFactory<CopyFactory> */
     use HasFactory, HasUlids;
+
+    public const int SHORT_BOOK_ID_LENGTH = 6;
 
     /**
      * The Book ID: the public link and QR code of this physical book. It can't be
@@ -103,6 +106,31 @@ class Copy extends Model
     public function foundPageUrl(): string
     {
         return route('copies.found', $this->public_id);
+    }
+
+    /**
+     * The Book ID as printed on a label, short enough to read. These are the random
+     * last characters of the ULID; the QR code holds the full ID.
+     */
+    public function shortBookId(): string
+    {
+        return strtoupper(substr($this->public_id, -self::SHORT_BOOK_ID_LENGTH));
+    }
+
+    /**
+     * What a label shows for this book.
+     */
+    public function labelValue(LabelElement $element): ?string
+    {
+        return match ($element) {
+            LabelElement::Title => $this->edition->title,
+            LabelElement::Authors => $this->edition->authors->pluck('name')->join(', '),
+            LabelElement::Library => $this->library->name,
+            LabelElement::InventoryCode => $this->shortBookId(),
+            LabelElement::Isbn => $this->edition->isbn_13 ?? $this->edition->isbn_10,
+            LabelElement::Genres => $this->edition->genres->pluck('name')->join(', '),
+            default => null,
+        };
     }
 
     /**
@@ -308,8 +336,9 @@ class Copy extends Model
 
     /**
      * Copies whose edition matches the search term by title, subtitle, any
-     * contributor (author, translator…, also by alias) or ISBN. Text is compared
-     * as folded SearchKeys, so case, apostrophes and Latin/Cyrillic don't matter.
+     * contributor (author, translator…, also by alias) or ISBN, or whose label
+     * shows this short Book ID. Text is compared as folded SearchKeys, so case,
+     * apostrophes and Latin/Cyrillic don't matter.
      *
      * @param  Builder<Copy>  $query
      */
@@ -325,10 +354,16 @@ class Copy extends Model
         $pattern = SearchKey::containsPattern($term);
         $isbn = Edition::normalizeIsbn($term) ?? '';
 
-        $query->whereHas('edition', fn (Builder $edition) => $edition
-            ->whereLike('search_text', $pattern ?? '')
-            ->orWhere('isbn_13', $isbn)
-            ->orWhere('isbn_10', $isbn)
-            ->orWhereHas('contributors', fn (Builder $person) => $person->nameOrAliasContains($term)));
+        $query->where(function (Builder $matches) use ($term, $pattern, $isbn): void {
+            $matches->whereHas('edition', fn (Builder $edition) => $edition
+                ->whereLike('search_text', $pattern ?? '')
+                ->orWhere('isbn_13', $isbn)
+                ->orWhere('isbn_10', $isbn)
+                ->orWhereHas('contributors', fn (Builder $person) => $person->nameOrAliasContains($term)));
+
+            if (preg_match('/^[0-9a-zA-Z]{'.self::SHORT_BOOK_ID_LENGTH.'}$/', $term) === 1) {
+                $matches->orWhereLike('public_id', '%'.strtolower($term));
+            }
+        });
     }
 }

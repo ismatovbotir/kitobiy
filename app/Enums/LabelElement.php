@@ -4,7 +4,7 @@ namespace App\Enums;
 
 /**
  * A piece of content a super admin can place on a label template.
- * Values that come from a copy are filled in when labels are printed (Phase 2).
+ * Values that come from a copy are filled in when labels are printed (Copy::labelValue).
  */
 enum LabelElement: string
 {
@@ -45,7 +45,7 @@ enum LabelElement: string
             self::Title => 'O‘tkan kunlar',
             self::Authors => 'Abdulla Qodiriy',
             self::Library => __('Family library'),
-            self::InventoryCode => 'KTB-0042',
+            self::InventoryCode => 'A1B2C3',
             self::Isbn => '978-9943-01-234-5',
             self::Genres => 'Tarixiy roman',
             self::QrCode, self::Wordmark => config('app.name'),

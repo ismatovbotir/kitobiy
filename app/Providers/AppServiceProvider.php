@@ -29,6 +29,12 @@ class AppServiceProvider extends ServiceProvider
     {
         URL::forceHttps($this->app->isProduction());
 
+        // Links must never follow a Host header chosen by the visitor: they end up
+        // in emails and in QR codes printed on paper, which can't be corrected.
+        if ($this->app->isProduction()) {
+            URL::forceRootUrl(config('app.url'));
+        }
+
         Relation::morphMap([
             'listing' => Listing::class,
             'message' => Message::class,

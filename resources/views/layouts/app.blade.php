@@ -3,8 +3,8 @@
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-paper font-sans text-ink antialiased">
-        <header class="border-b border-ink/10 bg-paper/90">
+    <body class="min-h-screen bg-paper font-sans text-ink antialiased print:bg-white">
+        <header class="border-b border-ink/10 bg-paper/90 print:hidden">
             <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 pt-4 pb-2">
                 <div class="flex min-w-0 items-center gap-2">
                     <a href="{{ route('dashboard') }}" wire:navigate><x-wordmark /></a>
@@ -32,7 +32,7 @@
             @endif
         </header>
 
-        <main class="mx-auto max-w-5xl px-4 py-8">
+        <main class="mx-auto max-w-5xl px-4 py-8 print:m-0 print:max-w-none print:p-0">
             {{ $slot }}
         </main>
     </body>

@@ -43,6 +43,10 @@ return [
     'unique' => 'Значение поля «:attribute» уже занято.',
 
     'attributes' => [
+        'templateId' => 'размер этикетки',
+        'selectedIds' => 'книги',
+        'selectedIds.*' => 'книга',
+        'skip' => 'использованные этикетки',
         'borrowerName' => 'имя',
         'borrowerPhone' => 'телефон',
         'dueOn' => 'срок возврата',

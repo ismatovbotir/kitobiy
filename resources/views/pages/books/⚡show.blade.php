@@ -693,7 +693,11 @@ new class extends Component
                 <span x-show="copied" x-cloak>{{ __('Copied!') }}</span>
             </button>
             <a href="{{ $this->copy->foundPageUrl() }}" target="_blank" rel="noopener" class="link shrink-0 text-sm">{{ __('Open') }}</a>
+            @if ($this->canEditCopy && $this->copy->library_id === auth()->user()->currentLibrary()?->id)
+                <a href="{{ route('library.labels', ['book' => $this->copy->id]) }}" wire:navigate class="link shrink-0 text-sm">{{ __('Print a label') }}</a>
+            @endif
         </div>
+        <p class="mt-2 text-sm">{{ __('On the label:') }} <span class="font-mono font-medium">{{ $this->copy->shortBookId() }}</span></p>
     </section>
 
     @if ($this->transferHistory->isNotEmpty())

@@ -26,10 +26,17 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed a demo home library: an owner, a family member, tags
      * and 15 copies including one exact duplicate and one same-work duplicate.
-     * Safe to re-run: it skips when the demo library already exists.
+     * Safe to re-run: it skips when the demo library already exists. It never
+     * runs in production, because its accounts have a publicly known password.
      */
     public function run(): void
     {
+        if (app()->isProduction()) {
+            $this->command?->warn('Demo data is not seeded in production.');
+
+            return;
+        }
+
         if (Library::where('slug', self::DEMO_LIBRARY_SLUG)->exists()) {
             $this->command?->info('Demo library already seeded, skipping.');
 

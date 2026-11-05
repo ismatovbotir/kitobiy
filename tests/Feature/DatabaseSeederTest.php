@@ -24,6 +24,16 @@ class DatabaseSeederTest extends TestCase
         $this->assertSame(['Мастер и Маргарита'], $library->sameWorkDuplicates()->pluck('original_title')->all());
     }
 
+    public function test_demo_accounts_are_never_created_in_production(): void
+    {
+        $this->app->detectEnvironment(fn (): string => 'production');
+
+        $this->seed(DatabaseSeeder::class);
+
+        $this->assertDatabaseCount('users', 0);
+        $this->assertDatabaseCount('libraries', 0);
+    }
+
     public function test_running_twice_does_not_fail_or_duplicate_data(): void
     {
         $this->seed(DatabaseSeeder::class);

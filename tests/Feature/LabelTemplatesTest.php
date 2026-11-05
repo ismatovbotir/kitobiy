@@ -79,12 +79,19 @@ class LabelTemplatesTest extends TestCase
 
         $template = LabelTemplate::where('name', 'Spine 30×20')->sole();
 
+        // MySQL JSON columns don't keep key order, so compare each element sorted by key.
+        $sortedByKey = fn (array $elements): array => array_map(function (array $element): array {
+            ksort($element);
+
+            return $element;
+        }, $elements);
+
         $this->assertSame(
-            [
+            $sortedByKey([
                 ['type' => 'title', 'x' => 0, 'y' => 1, 'w' => 30, 'h' => 6, 'font_size' => 8, 'bold' => true, 'align' => 'left', 'text' => null],
                 ['type' => 'text', 'x' => 1, 'y' => 15, 'w' => 10, 'h' => 5, 'font_size' => 6, 'bold' => false, 'align' => 'center', 'text' => 'Ex libris'],
-            ],
-            $template->elements,
+            ]),
+            $sortedByKey($template->elements),
         );
     }
 

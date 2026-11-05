@@ -16,6 +16,8 @@ return [
     'in' => 'Выбранное значение поля «:attribute» недопустимо.',
     'enum' => 'Выбрано неверное значение поля «:attribute».',
     'required_if' => 'Заполните поле «:attribute».',
+    'date' => 'Поле «:attribute» должно быть датой.',
+    'after_or_equal' => 'Поле «:attribute» не может быть раньше сегодняшнего дня.',
     'integer' => 'Поле «:attribute» должно быть целым числом.',
     'lowercase' => 'Поле «:attribute» должно быть в нижнем регистре.',
     'max' => [
@@ -41,6 +43,9 @@ return [
     'unique' => 'Значение поля «:attribute» уже занято.',
 
     'attributes' => [
+        'borrowerName' => 'имя',
+        'borrowerPhone' => 'телефон',
+        'dueOn' => 'срок возврата',
         'contact' => 'контакт',
         'price' => 'цена',
         'note' => 'заметка',

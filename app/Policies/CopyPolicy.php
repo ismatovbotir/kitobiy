@@ -36,7 +36,22 @@ class CopyPolicy
      */
     public function transfer(User $user, Copy $copy): bool
     {
-        return $this->update($user, $copy) && ! $copy->isLost();
+        return $this->update($user, $copy)
+            && ! $copy->isLost()
+            && $copy->activeLoan() === null
+            && $copy->pendingLoanLink() === null;
+    }
+
+    /**
+     * Everyone who catalogs may lend a book that is on the shelf and not already
+     * promised to someone through a giving link.
+     */
+    public function lend(User $user, Copy $copy): bool
+    {
+        return $this->update($user, $copy)
+            && ! $copy->isLost()
+            && $copy->activeLoan() === null
+            && $copy->pendingTransfer() === null;
     }
 
     /**
@@ -45,7 +60,10 @@ class CopyPolicy
      */
     public function createListing(User $user, Copy $copy): bool
     {
-        return $this->update($user, $copy) && ! $copy->isLost() && ! $user->isSuspended();
+        return $this->update($user, $copy)
+            && ! $copy->isLost()
+            && ! $user->isSuspended()
+            && $copy->activeLoan() === null;
     }
 
     /**

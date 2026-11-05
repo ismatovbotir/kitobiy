@@ -76,7 +76,8 @@ class Listing extends Model
 
     /**
      * Listings other people may see: open, not hidden by a moderator, the book
-     * still exists, the seller is not suspended and still belongs to its library.
+     * still exists and is not out on loan, the seller is not suspended and still
+     * belongs to its library.
      *
      * @param  Builder<Listing>  $query
      */
@@ -86,6 +87,7 @@ class Listing extends Model
         $query->where('status', ListingStatus::Active)
             ->whereNull('hidden_at')
             ->whereNotNull('copy_id')
+            ->whereDoesntHave('copy.loans', fn (Builder $loan) => $loan->active())
             ->whereHas('seller', fn (Builder $seller) => $seller->whereNull('suspended_at'))
             ->whereExists(fn (QueryBuilder $membership) => $membership
                 ->selectRaw('1')

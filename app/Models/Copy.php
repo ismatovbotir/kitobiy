@@ -41,6 +41,58 @@ class Copy extends Model
     }
 
     /**
+     * @return HasMany<Loan, $this>
+     */
+    public function loans(): HasMany
+    {
+        return $this->hasMany(Loan::class);
+    }
+
+    public function activeLoan(): ?Loan
+    {
+        return $this->loans()->active()->latest('id')->first();
+    }
+
+    public function pendingLoanLink(): ?Loan
+    {
+        return $this->loans()->pendingLink()->latest('id')->first();
+    }
+
+    /**
+     * Lend this book to someone without an account.
+     */
+    public function lendToPerson(User $lender, string $name, ?string $phone, ?string $dueOn): Loan
+    {
+        return DB::transaction(function () use ($lender, $name, $phone, $dueOn): Loan {
+            static::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail();
+
+            return $this->activeLoan() ?? $this->loans()->create([
+                'lent_by' => $lender->getKey(),
+                'borrower_name' => $name,
+                'borrower_phone' => $phone,
+                'due_on' => $dueOn,
+            ]);
+        });
+    }
+
+    /**
+     * Start lending to another library, or return the link already open, so one
+     * book never has two links that could send it to two places.
+     */
+    public function offerLoan(User $lender, ?string $dueOn): Loan
+    {
+        return DB::transaction(function () use ($lender, $dueOn): Loan {
+            static::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail();
+
+            return $this->pendingLoanLink() ?? $this->loans()->create([
+                'lent_by' => $lender->getKey(),
+                'due_on' => $dueOn,
+                ...Loan::newLinkAttributes(),
+            ]);
+        });
+    }
+
+    /**
      * @return HasMany<FoundReport, $this>
      */
     public function foundReports(): HasMany

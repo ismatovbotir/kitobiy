@@ -15,6 +15,7 @@ Route::livewire('/gift/{token}', 'pages::gift.show')->middleware('throttle:60,1'
 Route::livewire('/transfers/{token}', 'pages::transfers.show')->middleware('throttle:60,1')->name('transfers.show');
 Route::livewire('/collectors/{token}', 'pages::collectors.show')->middleware('throttle:60,1')->name('collectors.show');
 Route::livewire('/c/{publicId}', 'pages::copies.found')->middleware('throttle:60,1')->name('copies.found');
+Route::livewire('/loans/{token}', 'pages::loans.show')->middleware('throttle:60,1')->name('loans.show');
 
 Route::middleware('guest')->group(function () {
     Route::livewire('/login', 'pages::auth.login')->name('login');
@@ -40,6 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('/library/members', 'pages::library.members')->name('library.members');
     Route::livewire('/library/wishlist', 'pages::library.wishlist')->name('library.wishlist');
     Route::livewire('/library/found', 'pages::library.found')->name('library.found');
+    Route::livewire('/library/loans', 'pages::library.loans')->name('library.loans');
     Route::livewire('/books/{copy}/offer', 'pages::market.create')->whereNumber('copy')->name('market.create');
     Route::livewire('/market', 'pages::market.index')->name('market.index');
     Route::livewire('/market/{listing}', 'pages::market.show')->whereNumber('listing')->name('market.show');

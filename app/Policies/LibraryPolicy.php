@@ -32,6 +32,15 @@ class LibraryPolicy
     }
 
     /**
+     * A borrower's phone number is someone else's personal data, so only the
+     * people who run the library see it.
+     */
+    public function viewBorrowerPhone(User $user, Library $library): bool
+    {
+        return $library->roleOf($user)?->canManageMembers() ?? false;
+    }
+
+    /**
      * Owners and admins may rename the library.
      */
     public function update(User $user, Library $library): bool

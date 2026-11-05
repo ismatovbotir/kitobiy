@@ -4,6 +4,7 @@ use App\Models\Author;
 use App\Models\Edition;
 use App\Models\Genre;
 use App\Models\Library;
+use App\Models\Loan;
 use App\Support\Language;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -12,7 +13,8 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new class extends Component {
+new class extends Component
+{
     use WithPagination;
 
     public const int PER_PAGE = 24;
@@ -146,6 +148,23 @@ new class extends Component {
         }
     }
 
+    /**
+     * Books this library has on loan from others. They are not its own, so they
+     * don't count as books here and their owner's details stay private.
+     *
+     * @return Collection<int, Loan>
+     */
+    #[Computed]
+    public function borrowedBooks(): Collection
+    {
+        return Loan::query()
+            ->active()
+            ->where('borrower_library_id', $this->library->id)
+            ->with(['copy.edition', 'copy.library'])
+            ->latest('id')
+            ->get();
+    }
+
     public function clearFilters(): void
     {
         $this->reset('search', 'person', 'genre', 'tag', 'language', 'hidden');
@@ -169,6 +188,17 @@ new class extends Component {
             <a href="{{ route('books.create') }}" wire:navigate class="btn-primary w-auto">+ {{ __('Add a book') }}</a>
         @endcan
     </div>
+
+    @if ($this->borrowedBooks->isNotEmpty())
+        <ul class="mt-4 space-y-1 rounded-lg bg-accent/5 px-3 py-2 text-sm">
+            @foreach ($this->borrowedBooks as $borrowedLoan)
+                <li wire:key="borrowed-{{ $borrowedLoan->id }}">
+                    <span class="font-medium">{{ $borrowedLoan->copy->edition->title }}</span>
+                    <span class="text-ink-soft">· {{ __('Borrowed from :library', ['library' => $borrowedLoan->copy->library->name]) }}</span>
+                </li>
+            @endforeach
+        </ul>
+    @endif
 
     <div class="mt-6 space-y-3">
         @if ($this->selectedPerson)

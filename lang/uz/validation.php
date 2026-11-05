@@ -16,6 +16,8 @@ return [
     'in' => 'Tanlangan :attribute yaroqsiz.',
     'enum' => 'Tanlangan :attribute noto‘g‘ri.',
     'required_if' => ':Attribute maydonini to‘ldiring.',
+    'date' => ':Attribute sana bo‘lishi kerak.',
+    'after_or_equal' => ':Attribute bugundan oldin bo‘lmasligi kerak.',
     'integer' => ':Attribute butun son bo‘lishi kerak.',
     'lowercase' => ':Attribute kichik harflarda bo‘lishi kerak.',
     'max' => [
@@ -41,6 +43,9 @@ return [
     'unique' => 'Bu :attribute allaqachon band.',
 
     'attributes' => [
+        'borrowerName' => 'ism',
+        'borrowerPhone' => 'telefon',
+        'dueOn' => 'qaytarish muddati',
         'contact' => 'aloqa',
         'price' => 'narx',
         'note' => 'izoh',

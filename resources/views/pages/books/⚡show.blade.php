@@ -6,6 +6,7 @@ use App\Enums\CopyStatus;
 use App\Models\Copy;
 use App\Models\CopyTransfer;
 use App\Models\Edition;
+use App\Models\Loan;
 use App\Services\CoverImage;
 use App\Support\Concerns\SuggestsContributorNames;
 use App\Support\Concerns\SuggestsPublisherNames;
@@ -36,6 +37,12 @@ new class extends Component
     public string $condition = '';
 
     public string $status = '';
+
+    public string $borrowerName = '';
+
+    public string $borrowerPhone = '';
+
+    public string $dueOn = '';
 
     public bool $editingEdition = false;
 
@@ -220,6 +227,7 @@ new class extends Component
             if ($this->copy->isLost()) {
                 $this->copy->pendingTransfer()?->cancel();
                 $this->copy->closeListings();
+                $this->copy->pendingLoanLink()?->cancelLink();
             }
         });
 
@@ -234,6 +242,105 @@ new class extends Component
     public function canTransfer(): bool
     {
         return auth()->user()->can('transfer', $this->copy);
+    }
+
+    #[Computed]
+    public function canLend(): bool
+    {
+        return auth()->user()->can('lend', $this->copy);
+    }
+
+    #[Computed]
+    public function activeLoan(): ?Loan
+    {
+        return $this->copy->activeLoan();
+    }
+
+    #[Computed]
+    public function pendingLoanLink(): ?Loan
+    {
+        return $this->copy->pendingLoanLink();
+    }
+
+    /**
+     * @return Collection<int, Loan>
+     */
+    #[Computed]
+    public function pastLoans(): Collection
+    {
+        return $this->copy->loans()->whereNotNull('returned_at')->latest('returned_at')->limit(10)->get();
+    }
+
+    public function lendToPerson(): void
+    {
+        $this->authorize('lend', $this->copy);
+
+        $validated = $this->validate([
+            'borrowerName' => ['required', 'string', 'max:255'],
+            'borrowerPhone' => ['nullable', 'string', 'max:40'],
+            'dueOn' => ['nullable', 'date', 'after_or_equal:'.now(Loan::TIMEZONE)->toDateString()],
+        ]);
+
+        $this->copy->pendingLoanLink()?->cancelLink();
+        $this->copy->lendToPerson(
+            auth()->user(),
+            trim($validated['borrowerName']),
+            trim((string) $validated['borrowerPhone']) ?: null,
+            $validated['dueOn'] ?: null,
+        );
+
+        $this->reset('borrowerName', 'borrowerPhone', 'dueOn');
+        $this->refreshLoans();
+
+        session()->flash('status', __('Changes saved.'));
+    }
+
+    public function createLoanLink(): void
+    {
+        $this->authorize('lend', $this->copy);
+
+        $validated = $this->validate([
+            'dueOn' => ['nullable', 'date', 'after_or_equal:'.now(Loan::TIMEZONE)->toDateString()],
+        ]);
+
+        $this->copy->offerLoan(auth()->user(), $validated['dueOn'] ?: null);
+
+        $this->reset('dueOn');
+        $this->refreshLoans();
+    }
+
+    public function cancelLoanLink(): void
+    {
+        $this->authorize('update', $this->copy);
+
+        $this->copy->pendingLoanLink()?->cancelLink();
+
+        $this->refreshLoans();
+    }
+
+    public function markLoanReturned(): void
+    {
+        $this->authorize('update', $this->copy);
+
+        $this->copy->activeLoan()?->markReturned();
+
+        $this->refreshLoans();
+
+        session()->flash('status', __('Marked as returned.'));
+    }
+
+    public function deleteLoanRecord(int $loanId): void
+    {
+        $this->authorize('update', $this->copy);
+
+        $this->copy->loans()->whereNotNull('returned_at')->findOrFail($loanId)->delete();
+
+        unset($this->pastLoans);
+    }
+
+    private function refreshLoans(): void
+    {
+        unset($this->activeLoan, $this->pendingLoanLink, $this->pastLoans, $this->canLend, $this->canTransfer);
     }
 
     #[Computed]
@@ -571,6 +678,10 @@ new class extends Component
         </form>
     @endif
 
+    @if ($this->activeLoan && ! $this->canEditCopy)
+        <p class="mt-8 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">{{ __('Lent to :name', ['name' => $this->activeLoan->borrower_name]) }}</p>
+    @endif
+
     <section class="mt-8 rounded-xl border border-ink/10 bg-white p-4 sm:p-6" x-data="{ copied: false }">
         <h2 class="font-serif text-xl font-semibold">{{ __('Book ID') }}</h2>
         <p class="mt-1 text-xs text-ink-soft">{{ __('Each physical book has its own public page. If it gets lost, whoever finds it can write to you from there, without seeing your contact details.') }}</p>
@@ -733,10 +844,89 @@ new class extends Component
         @endif
     </section>
 
+    <section id="lending" class="mt-8 scroll-mt-6 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
+        <h2 class="font-serif text-xl font-semibold">{{ __('Lending') }}</h2>
+
+        @if ($this->activeLoan)
+            <p class="mt-2 text-sm font-medium">{{ __('Lent to :name', ['name' => $this->activeLoan->borrower_name]) }}</p>
+            @can('viewBorrowerPhone', $this->copy->library)
+                @if ($this->activeLoan->borrower_phone)
+                    <p class="text-sm text-ink-soft">{{ $this->activeLoan->borrower_phone }}</p>
+                @endif
+            @endcan
+            <x-loan-due :loan="$this->activeLoan" class="mt-1" />
+            <button type="button" wire:click="markLoanReturned" wire:loading.attr="disabled"
+                    class="mt-3 min-h-11 cursor-pointer rounded-lg border border-accent px-3 text-sm font-medium text-accent hover:bg-accent hover:text-white">
+                {{ __('It came back') }}
+            </button>
+        @elseif ($this->canLend)
+            @if ($this->pendingLoanLink)
+                @php($loanUrl = route('loans.show', $this->pendingLoanLink->token))
+                <div class="mt-3" x-data="{ copied: false }">
+                    <p class="text-sm">{{ __('Send this link to the other library. It works once and expires on :date.', ['date' => $this->pendingLoanLink->expires_at->toDateString()]) }}</p>
+                    <div class="mt-2 flex gap-2">
+                        <input type="text" readonly value="{{ $loanUrl }}" aria-label="{{ __('Lending') }}" class="form-input text-sm" x-on:focus="$el.select()">
+                        <button type="button" class="shrink-0 text-sm link"
+                                x-on:click="navigator.clipboard.writeText(@js($loanUrl)); copied = true; setTimeout(() => copied = false, 2000)">
+                            <span x-show="! copied">{{ __('Copy') }}</span>
+                            <span x-show="copied" x-cloak>{{ __('Copied!') }}</span>
+                        </button>
+                        <button type="button" wire:click="cancelLoanLink" class="shrink-0 text-sm text-red-700 hover:underline">{{ __('Cancel') }}</button>
+                    </div>
+                </div>
+            @endif
+
+            <form wire:submit="lendToPerson" class="mt-3 space-y-3">
+                <div>
+                    <label for="dueOn" class="form-label">{{ __('Return by (optional)') }}</label>
+                    <input wire:model="dueOn" id="dueOn" type="date" class="form-input">
+                    @error('dueOn') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div>
+                        <label for="borrowerName" class="form-label">{{ __('Who is borrowing it?') }}</label>
+                        <input wire:model="borrowerName" id="borrowerName" type="text" maxlength="255" class="form-input">
+                        @error('borrowerName') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label for="borrowerPhone" class="form-label">{{ __('Their phone (optional)') }}</label>
+                        <input wire:model="borrowerPhone" id="borrowerPhone" type="tel" maxlength="40" class="form-input">
+                        @error('borrowerPhone') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+                <p class="text-xs text-ink-soft">{{ __('The phone number is shown only to the people who run this library and is erased when the book comes back.') }}</p>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <button type="submit" class="btn-primary sm:w-auto" wire:loading.attr="disabled" wire:target="lendToPerson">{{ __('Lend to this person') }}</button>
+                    @unless ($this->pendingLoanLink)
+                        <button type="button" wire:click="createLoanLink" class="link text-sm">{{ __('Or lend to another library') }}</button>
+                    @endunless
+                </div>
+            </form>
+        @elseif ($this->copy->isLost())
+            <p class="mt-2 text-sm text-ink-soft">{{ __('Lost books cannot be lent.') }}</p>
+        @else
+            <p class="mt-2 text-sm text-ink-soft">{{ __('This book has an open giving link. Cancel it first to lend the book.') }}</p>
+        @endif
+
+        @if ($this->pastLoans->isNotEmpty())
+            <h3 class="mt-4 font-medium">{{ __('Earlier loans') }}</h3>
+            <ul class="mt-1 divide-y divide-ink/10 text-sm">
+                @foreach ($this->pastLoans as $pastLoan)
+                    <li wire:key="past-loan-{{ $pastLoan->id }}" class="flex items-center justify-between gap-3 py-1.5">
+                        <span class="min-w-0 truncate">{{ $pastLoan->borrower_name }} · {{ $pastLoan->returned_at->timezone(Loan::TIMEZONE)->toDateString() }}</span>
+                        <button type="button" wire:click="deleteLoanRecord({{ $pastLoan->id }})" class="shrink-0 text-xs text-red-700 hover:underline">{{ __('Delete') }}</button>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </section>
+
     @php($activeListing = $this->copy->activeListing())
     <section class="mt-8 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
         <h2 class="font-serif text-xl font-semibold">{{ __('Sell or swap') }}</h2>
-        @if ($activeListing)
+        @if ($this->activeLoan)
+            <p class="mt-2 text-sm text-ink-soft">{{ __('This book is on loan. It can be offered when it comes back.') }}</p>
+        @elseif ($activeListing)
             <p class="mt-2 text-sm">{{ __('This book is on the market.') }} <a href="{{ route('market.show', $activeListing) }}" wire:navigate class="link">{{ __('Open the listing') }}</a></p>
         @elseif ($this->copy->isLost())
             <p class="mt-2 text-sm text-ink-soft">{{ __('Lost books cannot be offered.') }}</p>
@@ -771,6 +961,10 @@ new class extends Component
                     class="mt-3 min-h-11 cursor-pointer rounded-lg border border-accent px-3 text-sm font-medium text-accent hover:bg-accent hover:text-white">
                 {{ __('Create a link') }}
             </button>
+        @elseif ($this->activeLoan)
+            <p class="mt-3 text-sm text-ink-soft">{{ __('This book is on loan. It can be given away when it comes back.') }}</p>
+        @elseif ($this->pendingLoanLink)
+            <p class="mt-3 text-sm text-ink-soft">{{ __('This book has an open lending link. Cancel it first to give the book away.') }}</p>
         @else
             <p class="mt-3 text-sm text-ink-soft">{{ __('Lost books cannot be given away.') }}</p>
         @endif

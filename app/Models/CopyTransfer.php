@@ -111,7 +111,7 @@ class CopyTransfer extends Model
         return DB::transaction(function () use ($user, $library): bool {
             $copy = Copy::query()->whereKey($this->copy_id)->lockForUpdate()->first();
 
-            if ($copy === null || $copy->isLost() || $copy->library_id === $library->getKey()) {
+            if ($copy === null || $copy->isLost() || $copy->library_id === $library->getKey() || $copy->activeLoan() !== null) {
                 return false;
             }
 
@@ -130,6 +130,7 @@ class CopyTransfer extends Model
 
             $copy->closeListings();
             $copy->foundReports()->delete();
+            $copy->loans()->delete();
             $copy->tags()->detach();
             $copy->forceFill([
                 'library_id' => $library->getKey(),

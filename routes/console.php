@@ -14,3 +14,4 @@ Artisan::command('inspire', function () {
  */
 Schedule::command('catalog:import-publishers')->weeklyOn(1, '03:00')->withoutOverlapping();
 Schedule::command('catalog:import-authors')->weeklyOn(1, '03:30')->withoutOverlapping();
+Schedule::command('kitobiy:send-loan-reminders')->dailyAt('09:00')->timezone('Asia/Tashkent')->withoutOverlapping();

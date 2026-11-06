@@ -46,6 +46,14 @@ return [
         'timeout' => (int) env('GOOGLE_BOOKS_TIMEOUT', 5),
     ],
 
+    'telegram' => [
+        'url' => env('TELEGRAM_API_URL', 'https://api.telegram.org'),
+        'token' => env('TELEGRAM_BOT_TOKEN'),
+        'bot_username' => env('TELEGRAM_BOT_USERNAME'),
+        'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
+        'timeout' => (int) env('TELEGRAM_TIMEOUT', 5),
+    ],
+
     'wikidata' => [
         'url' => env('WIKIDATA_SPARQL_URL', 'https://query.wikidata.org/sparql'),
         'timeout' => (int) env('WIKIDATA_TIMEOUT', 90),

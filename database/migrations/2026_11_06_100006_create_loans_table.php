@@ -23,6 +23,7 @@ return new class extends Migration
             $table->timestamp('expires_at')->nullable();
             $table->timestamp('cancelled_at')->nullable();
             $table->timestamp('returned_at')->nullable();
+            $table->timestamp('reminded_at')->nullable();
             $table->timestamps();
 
             $table->index(['copy_id', 'returned_at']);

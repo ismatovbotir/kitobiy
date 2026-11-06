@@ -3,8 +3,10 @@
 use App\Models\CollectorProfile;
 use App\Models\User;
 use App\Rules\NoContactDetails;
+use App\Services\Telegram;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
@@ -16,6 +18,9 @@ new class extends Component
     public string $displayName = '';
 
     public string $bio = '';
+
+    #[Locked]
+    public string $telegramLink = '';
 
     public function mount(): void
     {
@@ -86,6 +91,28 @@ new class extends Component
         unset($this->blockedUsers);
     }
 
+    #[Computed]
+    public function telegramAvailable(): bool
+    {
+        return app(Telegram::class)->isConfigured();
+    }
+
+    public function connectTelegram(): void
+    {
+        abort_unless($this->telegramAvailable, 404);
+
+        $this->telegramLink = auth()->user()->newTelegramLink(app(Telegram::class)->botUsername());
+    }
+
+    public function disconnectTelegram(): void
+    {
+        auth()->user()->disconnectTelegram();
+
+        $this->telegramLink = '';
+
+        session()->flash('status', __('Telegram disconnected.'));
+    }
+
     public function render()
     {
         return $this->view()->title(__('Collector profile'));
@@ -140,6 +167,23 @@ new class extends Component
             @endif
         @endif
     </section>
+
+    @if ($this->telegramAvailable)
+        <section class="mt-6 rounded-xl border border-ink/10 bg-white p-4 sm:p-6" @if ($telegramLink !== '' && auth()->user()->telegram_chat_id === null) wire:poll.5s @endif>
+            <h2 class="font-serif text-xl font-semibold">{{ __('Telegram') }}</h2>
+            @if (auth()->user()->telegram_chat_id !== null)
+                <p class="mt-1 text-sm">{{ __('Connected. You get notices about messages, found books and overdue loans there, and you can log in with Telegram.') }}</p>
+                <button type="button" wire:click="disconnectTelegram" class="mt-3 text-sm font-medium text-red-700 hover:underline">{{ __('Disconnect Telegram') }}</button>
+            @elseif ($telegramLink !== '')
+                <p class="mt-1 text-sm">{{ __('Open the bot and press Start. The link works for 15 minutes.') }}</p>
+                <a href="{{ $telegramLink }}" target="_blank" rel="noopener" class="btn-primary mt-3 sm:w-auto">{{ __('Open the bot') }}</a>
+            @else
+                <p class="mt-1 text-sm text-ink-soft">{{ __('Get notices about messages, found books and overdue loans in Telegram, and log in with it.') }}</p>
+                <button type="button" wire:click="connectTelegram" wire:loading.attr="disabled"
+                        class="mt-3 min-h-11 cursor-pointer rounded-lg border border-accent px-3 text-sm font-medium text-accent hover:bg-accent hover:text-white">{{ __('Connect Telegram') }}</button>
+            @endif
+        </section>
+    @endif
 
     @if ($this->blockedUsers->isNotEmpty())
         <section class="mt-6 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">

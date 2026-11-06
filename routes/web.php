@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\Auth\LogoutController;
+use App\Http\Controllers\Auth\TelegramLoginController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\SwitchLibraryController;
+use App\Http\Controllers\TelegramWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard')->name('home');
@@ -17,7 +19,10 @@ Route::livewire('/collectors/{token}', 'pages::collectors.show')->middleware('th
 Route::livewire('/c/{publicId}', 'pages::copies.found')->middleware('throttle:60,1')->name('copies.found');
 Route::livewire('/loans/{token}', 'pages::loans.show')->middleware('throttle:60,1')->name('loans.show');
 
+Route::post('/telegram/webhook', TelegramWebhookController::class)->middleware('throttle:120,1')->name('telegram.webhook');
+
 Route::middleware('guest')->group(function () {
+    Route::get('/auth/telegram/callback', TelegramLoginController::class)->middleware('throttle:10,1')->name('telegram.login');
     Route::livewire('/login', 'pages::auth.login')->name('login');
     Route::livewire('/register', 'pages::auth.register')->name('register');
     Route::livewire('/forgot-password', 'pages::auth.forgot-password')->name('password.request');

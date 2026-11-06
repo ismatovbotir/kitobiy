@@ -44,6 +44,7 @@ class Loan extends Model
             'expires_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'returned_at' => 'datetime',
+            'reminded_at' => 'datetime',
         ];
     }
 

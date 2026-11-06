@@ -18,10 +18,15 @@ use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 #[Fillable(['name', 'email', 'locale', 'password'])]
-#[Hidden(['password', 'remember_token'])]
+#[Hidden(['password', 'remember_token', 'telegram_chat_id', 'telegram_link_token'])]
 class User extends Authenticatable implements HasLocalePreference, MustVerifyEmail
 {
     public const int MAX_OWNED_LIBRARIES = 5;
+
+    /** Telegram allows at most 64 characters in a Start link. */
+    public const int TELEGRAM_TOKEN_LENGTH = 40;
+
+    public const int TELEGRAM_LINK_MINUTES = 15;
 
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -38,6 +43,8 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
             'password' => 'hashed',
             'is_super_admin' => 'boolean',
             'suspended_at' => 'datetime',
+            'telegram_chat_id' => 'integer',
+            'telegram_link_expires_at' => 'datetime',
             'current_library_id' => 'integer',
         ];
     }
@@ -56,6 +63,60 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     public function isSuperAdmin(): bool
     {
         return $this->is_super_admin === true;
+    }
+
+    /**
+     * A one-time link that opens the bot and connects this account. Only its hash
+     * is stored, so a database leak can't be used to connect someone's account.
+     */
+    public function newTelegramLink(string $botUsername): string
+    {
+        $token = Str::random(self::TELEGRAM_TOKEN_LENGTH);
+
+        $this->forceFill([
+            'telegram_link_token' => hash('sha256', $token),
+            'telegram_link_expires_at' => now()->addMinutes(self::TELEGRAM_LINK_MINUTES),
+        ])->save();
+
+        return "https://t.me/{$botUsername}?start={$token}";
+    }
+
+    /**
+     * Connect the chat that pressed Start. A chat belongs to one account, so any
+     * earlier account of that chat is disconnected. Returns null for a bad or old link.
+     */
+    public static function connectTelegramByToken(string $token, int $chatId): ?self
+    {
+        return DB::transaction(function () use ($token, $chatId): ?self {
+            $user = static::query()
+                ->where('telegram_link_token', hash('sha256', $token))
+                ->where('telegram_link_expires_at', '>', now())
+                ->lockForUpdate()
+                ->first();
+
+            if ($user === null) {
+                return null;
+            }
+
+            static::query()->where('telegram_chat_id', $chatId)->whereKeyNot($user->getKey())->update(['telegram_chat_id' => null]);
+
+            $user->forceFill([
+                'telegram_chat_id' => $chatId,
+                'telegram_link_token' => null,
+                'telegram_link_expires_at' => null,
+            ])->save();
+
+            return $user;
+        });
+    }
+
+    public function disconnectTelegram(): void
+    {
+        $this->forceFill([
+            'telegram_chat_id' => null,
+            'telegram_link_token' => null,
+            'telegram_link_expires_at' => null,
+        ])->save();
     }
 
     /**

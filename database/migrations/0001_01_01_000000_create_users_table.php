@@ -19,6 +19,9 @@ return new class extends Migration
             $table->string('password');
             $table->boolean('is_super_admin')->default(false);
             $table->timestamp('suspended_at')->nullable();
+            $table->bigInteger('telegram_chat_id')->nullable()->unique();
+            $table->string('telegram_link_token', 64)->nullable()->unique();
+            $table->timestamp('telegram_link_expires_at')->nullable();
             // The library the user works in. No FK: libraries are created later; User::currentLibrary() ignores a stale id.
             $table->unsignedBigInteger('current_library_id')->nullable();
             $table->rememberToken();

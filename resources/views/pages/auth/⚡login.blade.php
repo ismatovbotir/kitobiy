@@ -7,7 +7,8 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
-new class extends Component {
+new class extends Component
+{
     public string $email = '';
 
     public string $password = '';
@@ -82,6 +83,17 @@ new class extends Component {
 
         <button type="submit" class="btn-primary">{{ __('Log in') }}</button>
     </form>
+
+    @if (app(\App\Services\Telegram::class)->isConfigured())
+        <div class="mt-6 flex flex-col items-center gap-2 border-t border-ink/10 pt-6" wire:ignore>
+            <script async src="https://telegram.org/js/telegram-widget.js?22"
+                    data-telegram-login="{{ app(\App\Services\Telegram::class)->botUsername() }}"
+                    data-size="large"
+                    data-auth-url="{{ route('telegram.login') }}"
+                    data-request-access="write"></script>
+            <p class="text-center text-xs text-ink-soft">{{ __('Works once you have connected Telegram on your profile page.') }}</p>
+        </div>
+    @endif
 
     <p class="mt-6 text-center text-sm text-ink-soft">
         {{ __('No account yet?') }}

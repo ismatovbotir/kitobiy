@@ -66,6 +66,17 @@
         ['Ikki eshik orasi', 'h-44 max-lg:hidden', 'bg-book-dark text-paper'],
         ['Sinchalak', 'h-36 max-lg:hidden', 'bg-book-light text-ink'],
     ];
+
+    $drawers = [
+        __('Readers') => $stats['readers'],
+        __('Home libraries') => $stats['libraries'],
+        __('Books on shelves') => $stats['books'],
+        __('Different editions') => $stats['editions'],
+    ];
+
+    $regionNames = App\Support\Country::regionOptions(App\Support\Country::UZBEKISTAN);
+
+    $formatCount = fn (int $count): string => number_format($count, 0, '', "\u{00A0}");
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
@@ -128,6 +139,78 @@
                     @endforeach
                 </div>
             </div>
+
+            @if ($stats['isReady'])
+                <section id="register" aria-labelledby="register-title" class="mx-auto max-w-6xl px-4 pt-14 pb-4 md:pt-20">
+                    <h2 id="register-title" class="font-serif text-2xl font-semibold text-balance sm:text-3xl">{{ __('The library register') }}</h2>
+                    <p class="mt-2 max-w-2xl leading-relaxed text-ink-soft">{{ __('All Kitobiy readers, counted together. No names and no libraries are shown.') }}</p>
+
+                    <dl class="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
+                        @foreach ($drawers as $label => $count)
+                            <div class="flex min-w-0 flex-col-reverse items-center gap-3 rounded-sm border border-book-dark/30 bg-white/60 px-3 pt-4 pb-3 text-center">
+                                <span class="size-2.5 rounded-full bg-book-dark/60" aria-hidden="true"></span>
+                                <dd class="font-serif text-3xl font-semibold text-accent sm:text-4xl">{{ $formatCount($count) }}</dd>
+                                <dt class="w-full border border-book-dark/30 px-2 py-1 text-sm">{{ $label }}</dt>
+                            </div>
+                        @endforeach
+                    </dl>
+
+                    @if ($stats['mostShelved'] !== [] || $stats['regions'] !== [])
+                        <div class="mt-10 grid gap-10 md:grid-cols-2 md:gap-16">
+                            @if ($stats['mostShelved'] !== [])
+                                <div class="min-w-0">
+                                    <h3 class="font-serif text-xl font-semibold">{{ __('Most often on the shelves') }}</h3>
+                                    <p class="mt-1 text-sm text-ink-soft">{{ __('The number shows how many readers have the book.') }}</p>
+                                    <ol class="mt-3 flex flex-col gap-1">
+                                        @foreach ($stats['mostShelved'] as $book)
+                                            <li class="flex items-baseline gap-2 py-1">
+                                                <span class="min-w-0">
+                                                    <span class="font-serif">{{ $book['title'] }}</span>
+                                                    @if ($book['authors'] !== '')
+                                                        <span class="block text-sm text-ink-soft">{{ $book['authors'] }}</span>
+                                                    @endif
+                                                </span>
+                                                <span class="min-w-4 grow border-b border-dotted border-ink/40" aria-hidden="true"></span>
+                                                <span class="font-serif text-ink-soft">{{ $formatCount($book['readers']) }}</span>
+                                            </li>
+                                        @endforeach
+                                    </ol>
+                                </div>
+                            @endif
+
+                            @if ($stats['regions'] !== [])
+                                <div class="min-w-0">
+                                    <h3 class="font-serif text-xl font-semibold">{{ __('Where our readers are') }}</h3>
+                                    <p class="mt-1 text-sm text-ink-soft">{{ __('The number shows how many readers live in the region.') }}</p>
+                                    <ol class="mt-3 flex flex-col gap-1">
+                                        @foreach ($stats['regions'] as $region)
+                                            <li class="flex items-baseline gap-2 py-1">
+                                                <span class="min-w-0 font-serif">{{ $regionNames[$region['code']] }}</span>
+                                                <span class="min-w-4 grow border-b border-dotted border-ink/40" aria-hidden="true"></span>
+                                                <span class="font-serif text-ink-soft">{{ $formatCount($region['readers']) }}</span>
+                                            </li>
+                                        @endforeach
+                                    </ol>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
+                    <div class="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3">
+                        <a href="{{ route('register') }}" class="btn-primary w-auto">{{ __('Start your library') }}</a>
+                        <p class="font-serif text-lg italic">{{ __('Your shelves are not counted yet.') }}</p>
+                    </div>
+                    <p class="mt-4 max-w-2xl text-sm text-ink-soft">{{ __('A book or a region is named only when at least :count readers share it. Updated every hour.', ['count' => App\Support\CommunityStats::MIN_READERS_PER_ROW]) }}</p>
+                </section>
+            @else
+                <section id="register" aria-labelledby="register-title" class="mx-auto max-w-6xl px-4 pt-14 pb-4 md:pt-20">
+                    <div class="max-w-2xl border-l-4 border-book-dark pl-5">
+                        <h2 id="register-title" class="font-serif text-2xl font-semibold text-balance sm:text-3xl">{{ __('The first page of the register') }}</h2>
+                        <p class="mt-3 leading-relaxed">{{ __('Kitobiy has just opened. Soon this page will show how many books our readers hold, which books they own most often and where they live. The first readers are writing the first page: come and be one of them.') }}</p>
+                        <a href="{{ route('register') }}" class="btn-primary mt-6 w-auto">{{ __('Start your library') }}</a>
+                    </div>
+                </section>
+            @endif
 
             @foreach ($chapters as $chapter)
                 <section id="{{ $chapter['id'] }}" @class(['mx-auto grid max-w-6xl scroll-mt-6 gap-8 px-4 py-14 md:grid-cols-[minmax(0,5fr)_minmax(0,4fr)] md:gap-16 md:py-20', 'border-t border-ink/10' => ! $loop->first])>

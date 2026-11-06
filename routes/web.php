@@ -3,12 +3,13 @@
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\TelegramLoginController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\SwitchLibraryController;
 use App\Http\Controllers\TelegramWebhookController;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'landing')->middleware('guest')->name('home');
+Route::get('/', LandingController::class)->middleware('guest')->name('home');
 
 Route::post('/locale/{locale}', LocaleController::class)->name('locale.update');
 

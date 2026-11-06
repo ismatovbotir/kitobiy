@@ -61,7 +61,8 @@ new class extends Component
     }
 
     /**
-     * Private details, all optional. They are never shown to anyone else.
+     * Private details, all optional. Only the region reaches anyone else, as a
+     * public count of readers (CommunityStats).
      */
     public function saveDetails(): void
     {
@@ -233,7 +234,7 @@ new class extends Component
     <form wire:submit="saveDetails" class="mt-6 space-y-4 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
         <div>
             <h2 class="font-serif text-xl font-semibold">{{ __('About you') }}</h2>
-            <p class="mt-1 text-sm text-ink-soft">{{ __('All of this is optional. Other members and visitors never see it.') }}</p>
+            <p class="mt-1 text-sm text-ink-soft">{{ __('All of this is optional. Other members and visitors never see it. Your region only adds to a public count, shown once at least :count readers live there.', ['count' => App\Support\CommunityStats::MIN_READERS_PER_ROW]) }}</p>
         </div>
 
         <div>

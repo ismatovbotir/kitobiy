@@ -16,9 +16,8 @@ class LoginTest extends TestCase
         $this->get(route('login'))->assertOk()->assertSee(__('Log in'));
     }
 
-    public function test_home_sends_guests_to_login_through_dashboard(): void
+    public function test_dashboard_sends_guests_to_login(): void
     {
-        $this->get('/')->assertRedirect('/dashboard');
         $this->get('/dashboard')->assertRedirect(route('login'));
     }
 

@@ -8,7 +8,7 @@ use App\Http\Controllers\SwitchLibraryController;
 use App\Http\Controllers\TelegramWebhookController;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/dashboard')->name('home');
+Route::view('/', 'landing')->middleware('guest')->name('home');
 
 Route::post('/locale/{locale}', LocaleController::class)->name('locale.update');
 

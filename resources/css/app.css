@@ -13,6 +13,8 @@
     --color-ink-soft: #6b6157;
     --color-accent: #b5562f;
     --color-accent-dark: #93421f;
+    --color-book-light: #d98c66;
+    --color-book-dark: #7a3518;
 }
 
 @layer components {

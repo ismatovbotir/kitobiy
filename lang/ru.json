@@ -617,5 +617,14 @@
     "Contents": "Оглавление",
     "This library belongs to": "Эта библиотека принадлежит",
     "Private from day one. Only people you invite or send a link to can see your books.": "Закрыта с первого дня. Ваши книги увидят только те, кого вы пригласите или кому отправите ссылку.",
-    "The translations on this page are our own.": "Переводы на этой странице наши."
+    "The translations on this page are our own.": "Переводы на этой странице наши.",
+    "About you": "О вас",
+    "All of this is optional. Other members and visitors never see it.": "Всё это необязательно. Другие участники и посетители этого не видят.",
+    "Choose a country": "Выберите страну",
+    "Choose a region": "Выберите регион",
+    "Region": "Регион",
+    "Date of birth": "Дата рождения",
+    "Other countries": "Другие страны",
+    "Date of birth must be in the past.": "Дата рождения должна быть в прошлом.",
+    "Please check the year of birth.": "Проверьте год рождения."
 }

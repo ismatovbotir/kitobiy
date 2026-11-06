@@ -4,7 +4,9 @@ use App\Models\CollectorProfile;
 use App\Models\User;
 use App\Rules\NoContactDetails;
 use App\Services\Telegram;
+use App\Support\Country;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -19,6 +21,14 @@ new class extends Component
 
     public string $bio = '';
 
+    public string $countryCode = '';
+
+    public string $region = '';
+
+    public string $city = '';
+
+    public string $birthDate = '';
+
     #[Locked]
     public string $telegramLink = '';
 
@@ -26,6 +36,58 @@ new class extends Component
     {
         $this->displayName = (string) $this->profile?->display_name;
         $this->bio = (string) $this->profile?->bio;
+
+        $user = auth()->user();
+        $this->countryCode = (string) $user->country_code;
+        $this->region = (string) $user->region;
+        $this->city = (string) $user->city;
+        $this->birthDate = (string) $user->birth_date?->format('Y-m-d');
+    }
+
+    public function updatedCountryCode(): void
+    {
+        $this->region = '';
+        $this->city = '';
+    }
+
+    /**
+     * A city suggested for one Uzbek region makes no sense under another.
+     */
+    public function updatedRegion(): void
+    {
+        if ($this->countryCode === Country::UZBEKISTAN) {
+            $this->city = '';
+        }
+    }
+
+    /**
+     * Private details, all optional. They are never shown to anyone else.
+     */
+    public function saveDetails(): void
+    {
+        $validated = $this->validate([
+            'countryCode' => ['nullable', 'string', Rule::in(Country::CODES)],
+            'region' => [
+                'nullable', 'string', 'max:100',
+                ...($this->countryCode === Country::UZBEKISTAN ? [Rule::in(array_keys(Country::UZBEK_REGIONS))] : []),
+            ],
+            'city' => ['nullable', 'string', 'max:100'],
+            'birthDate' => ['nullable', 'date', 'before:today', 'after:1900-01-01'],
+        ], [
+            'birthDate.before' => __('Date of birth must be in the past.'),
+            'birthDate.after' => __('Please check the year of birth.'),
+        ]);
+
+        $hasCountry = filled($validated['countryCode']);
+
+        auth()->user()->update([
+            'country_code' => $hasCountry ? $validated['countryCode'] : null,
+            'region' => $hasCountry ? (trim((string) $validated['region']) ?: null) : null,
+            'city' => $hasCountry ? (trim((string) $validated['city']) ?: null) : null,
+            'birth_date' => filled($validated['birthDate']) ? $validated['birthDate'] : null,
+        ]);
+
+        session()->flash('status', __('Changes saved.'));
     }
 
     #[Computed]
@@ -167,6 +229,68 @@ new class extends Component
             @endif
         @endif
     </section>
+
+    <form wire:submit="saveDetails" class="mt-6 space-y-4 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
+        <div>
+            <h2 class="font-serif text-xl font-semibold">{{ __('About you') }}</h2>
+            <p class="mt-1 text-sm text-ink-soft">{{ __('All of this is optional. Other members and visitors never see it.') }}</p>
+        </div>
+
+        <div>
+            <label for="countryCode" class="form-label">{{ __('Country') }}</label>
+            <select wire:model.live="countryCode" id="countryCode" class="form-input">
+                <option value="">{{ __('Choose a country') }}</option>
+                @php($countryOptions = Country::options())
+                @foreach ($countryOptions['popular'] as $code => $countryName)
+                    <option value="{{ $code }}" wire:key="country-{{ $code }}">{{ $countryName }}</option>
+                @endforeach
+                <optgroup label="{{ __('Other countries') }}">
+                    @foreach ($countryOptions['others'] as $code => $countryName)
+                        <option value="{{ $code }}" wire:key="country-{{ $code }}">{{ $countryName }}</option>
+                    @endforeach
+                </optgroup>
+            </select>
+            @error('countryCode') <p class="form-error">{{ $message }}</p> @enderror
+        </div>
+
+        @if ($countryCode !== '')
+            @php($regionOptions = Country::regionOptions($countryCode))
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label for="region" class="form-label">{{ __('Region') }}</label>
+                    @if ($regionOptions !== [])
+                        <select wire:model.live="region" id="region" class="form-input">
+                            <option value="">{{ __('Choose a region') }}</option>
+                            @foreach ($regionOptions as $code => $regionName)
+                                <option value="{{ $code }}" wire:key="region-{{ $code }}">{{ $regionName }}</option>
+                            @endforeach
+                        </select>
+                    @else
+                        <input wire:model="region" id="region" type="text" maxlength="100" class="form-input">
+                    @endif
+                    @error('region') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label for="city" class="form-label">{{ __('City') }}</label>
+                    <input wire:model="city" id="city" type="text" maxlength="100" list="city-suggestions" autocomplete="off" class="form-input">
+                    <datalist id="city-suggestions">
+                        @foreach (Country::citySuggestions($region) as $cityName)
+                            <option value="{{ $cityName }}"></option>
+                        @endforeach
+                    </datalist>
+                    @error('city') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+            </div>
+        @endif
+
+        <div class="sm:max-w-xs">
+            <label for="birthDate" class="form-label">{{ __('Date of birth') }}</label>
+            <input wire:model="birthDate" id="birthDate" type="date" min="1900-01-02" max="{{ now()->subDay()->format('Y-m-d') }}" autocomplete="bday" class="form-input">
+            @error('birthDate') <p class="form-error">{{ $message }}</p> @enderror
+        </div>
+
+        <button type="submit" class="btn-primary sm:w-auto" wire:loading.attr="disabled" wire:target="saveDetails">{{ __('Save') }}</button>
+    </form>
 
     @if ($this->telegramAvailable)
         <section class="mt-6 rounded-xl border border-ink/10 bg-white p-4 sm:p-6" @if ($telegramLink !== '' && auth()->user()->telegram_chat_id === null) wire:poll.5s @endif>

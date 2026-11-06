@@ -617,5 +617,14 @@
     "Contents": "Mundarija",
     "This library belongs to": "Bu kutubxona egasi",
     "Private from day one. Only people you invite or send a link to can see your books.": "Birinchi kundan shaxsiy. Kitoblaringizni faqat siz taklif qilgan yoki havola yuborgan odamlar ko‘radi.",
-    "The translations on this page are our own.": "Bu sahifadagi tarjimalar bizniki."
+    "The translations on this page are our own.": "Bu sahifadagi tarjimalar bizniki.",
+    "About you": "Siz haqingizda",
+    "All of this is optional. Other members and visitors never see it.": "Bularning hammasi ixtiyoriy. Boshqa a’zolar va tashrif buyuruvchilar buni ko‘rmaydi.",
+    "Choose a country": "Davlatni tanlang",
+    "Choose a region": "Viloyatni tanlang",
+    "Region": "Viloyat",
+    "Date of birth": "Tug‘ilgan sana",
+    "Other countries": "Boshqa davlatlar",
+    "Date of birth must be in the past.": "Tug‘ilgan sana o‘tgan kun bo‘lishi kerak.",
+    "Please check the year of birth.": "Tug‘ilgan yilni tekshiring."
 }

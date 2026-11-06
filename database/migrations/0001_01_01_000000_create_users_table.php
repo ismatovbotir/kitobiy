@@ -17,6 +17,11 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->char('country_code', 2)->nullable();
+            // An ISO 3166-2 code for Uzbekistan (UZ-AN), typed text for other countries.
+            $table->string('region', 100)->nullable();
+            $table->string('city', 100)->nullable();
+            $table->date('birth_date')->nullable();
             $table->boolean('is_super_admin')->default(false);
             $table->timestamp('suspended_at')->nullable();
             $table->bigInteger('telegram_chat_id')->nullable()->unique();

@@ -43,6 +43,10 @@ return [
     'unique' => 'Значение поля «:attribute» уже занято.',
 
     'attributes' => [
+        'countryCode' => 'страна',
+        'region' => 'регион',
+        'city' => 'город',
+        'birthDate' => 'дата рождения',
         'templateId' => 'размер этикетки',
         'selectedIds' => 'книги',
         'selectedIds.*' => 'книга',

@@ -43,6 +43,10 @@ return [
     'unique' => 'Bu :attribute allaqachon band.',
 
     'attributes' => [
+        'countryCode' => 'davlat',
+        'region' => 'viloyat',
+        'city' => 'shahar',
+        'birthDate' => 'tug‘ilgan sana',
         'templateId' => 'yorliq o‘lchami',
         'selectedIds' => 'kitoblar',
         'selectedIds.*' => 'kitob',

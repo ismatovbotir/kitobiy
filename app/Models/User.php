@@ -17,8 +17,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
-#[Fillable(['name', 'email', 'locale', 'password'])]
-#[Hidden(['password', 'remember_token', 'telegram_chat_id', 'telegram_link_token'])]
+#[Fillable(['name', 'email', 'locale', 'password', 'country_code', 'region', 'city', 'birth_date'])]
+#[Hidden(['password', 'remember_token', 'telegram_chat_id', 'telegram_link_token', 'country_code', 'region', 'city', 'birth_date'])]
 class User extends Authenticatable implements HasLocalePreference, MustVerifyEmail
 {
     public const int MAX_OWNED_LIBRARIES = 5;
@@ -41,6 +41,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'birth_date' => 'date',
             'is_super_admin' => 'boolean',
             'suspended_at' => 'datetime',
             'telegram_chat_id' => 'integer',

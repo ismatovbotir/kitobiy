@@ -925,22 +925,24 @@ new class extends Component
         @endif
     </section>
 
-    @php($activeListing = $this->copy->activeListing())
-    <section class="mt-8 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
-        <h2 class="font-serif text-xl font-semibold">{{ __('Sell or swap') }}</h2>
-        @if ($this->activeLoan)
-            <p class="mt-2 text-sm text-ink-soft">{{ __('This book is on loan. It can be offered when it comes back.') }}</p>
-        @elseif ($activeListing)
-            <p class="mt-2 text-sm">{{ __('This book is on the market.') }} <a href="{{ route('market.show', $activeListing) }}" wire:navigate class="link">{{ __('Open the listing') }}</a></p>
-        @elseif ($this->copy->isLost())
-            <p class="mt-2 text-sm text-ink-soft">{{ __('Lost books cannot be offered.') }}</p>
-        @elseif (auth()->user()->can('createListing', $this->copy))
-            <p class="mt-2 text-xs text-ink-soft">{{ __('Only this book is shown to other members. Your library and your other books stay private.') }}</p>
-            <a href="{{ route('market.create', $this->copy) }}" wire:navigate class="mt-3 inline-flex min-h-11 items-center rounded-lg border border-accent px-3 text-sm font-medium text-accent hover:bg-accent hover:text-white">{{ __('Offer this book') }}</a>
-        @else
-            <p class="mt-2 text-sm text-ink-soft">{{ __('Your account cannot use the market right now.') }}</p>
-        @endif
-    </section>
+    @if (config('market.enabled'))
+        @php($activeListing = $this->copy->activeListing())
+        <section class="mt-8 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
+            <h2 class="font-serif text-xl font-semibold">{{ __('Sell or swap') }}</h2>
+            @if ($this->activeLoan)
+                <p class="mt-2 text-sm text-ink-soft">{{ __('This book is on loan. It can be offered when it comes back.') }}</p>
+            @elseif ($activeListing)
+                <p class="mt-2 text-sm">{{ __('This book is on the market.') }} <a href="{{ route('market.show', $activeListing) }}" wire:navigate class="link">{{ __('Open the listing') }}</a></p>
+            @elseif ($this->copy->isLost())
+                <p class="mt-2 text-sm text-ink-soft">{{ __('Lost books cannot be offered.') }}</p>
+            @elseif (auth()->user()->can('createListing', $this->copy))
+                <p class="mt-2 text-xs text-ink-soft">{{ __('Only this book is shown to other members. Your library and your other books stay private.') }}</p>
+                <a href="{{ route('market.create', $this->copy) }}" wire:navigate class="mt-3 inline-flex min-h-11 items-center rounded-lg border border-accent px-3 text-sm font-medium text-accent hover:bg-accent hover:text-white">{{ __('Offer this book') }}</a>
+            @else
+                <p class="mt-2 text-sm text-ink-soft">{{ __('Your account cannot use the market right now.') }}</p>
+            @endif
+        </section>
+    @endif
 
     <section class="mt-8 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
         <h2 class="font-serif text-xl font-semibold">{{ __('Give to another library') }}</h2>

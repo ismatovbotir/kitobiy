@@ -3,12 +3,15 @@
 use App\Enums\ListingKind;
 use App\Models\Copy;
 use App\Rules\NoContactDetails;
+use App\Support\Concerns\RequiresMarket;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 new class extends Component
 {
+    use RequiresMarket;
+
     public Copy $copy;
 
     public string $kind = 'sell';

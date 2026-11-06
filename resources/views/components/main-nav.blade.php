@@ -1,5 +1,6 @@
 @php
     $canAddBooks = auth()->user()->can('addBooks', auth()->user()->currentLibrary());
+    $marketEnabled = config('market.enabled');
     $links = [
         ['route' => 'dashboard', 'active' => 'dashboard', 'label' => __('Home')],
         ['route' => 'books.index', 'active' => ['books.index', 'books.show'], 'label' => __('Books')],
@@ -9,8 +10,8 @@
         ['route' => 'library.members', 'active' => 'library.members', 'label' => __('Family')],
         ['route' => 'library.labels', 'active' => 'library.labels', 'label' => __('Labels'), 'show' => $canAddBooks],
         ['route' => 'library.loans', 'active' => 'library.loans', 'label' => __('Loans')],
-        ['route' => 'market.index', 'active' => ['market.index', 'market.show', 'market.create'], 'label' => __('Market')],
-        ['route' => 'messages.index', 'active' => ['messages.index', 'messages.show'], 'label' => __('Messages'), 'badge' => auth()->user()->unreadMessagesCount()],
+        ['route' => 'market.index', 'active' => ['market.index', 'market.show', 'market.create'], 'label' => __('Market'), 'show' => $marketEnabled],
+        ['route' => 'messages.index', 'active' => ['messages.index', 'messages.show'], 'label' => __('Messages'), 'show' => $marketEnabled, 'badge' => $marketEnabled ? auth()->user()->unreadMessagesCount() : 0],
         ['route' => 'profile.edit', 'active' => 'profile.edit', 'label' => __('Profile')],
     ];
     $links = array_filter($links, fn (array $link): bool => $link['show'] ?? true);

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Conversation;
+use App\Support\Concerns\RequiresMarket;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Computed;
@@ -9,7 +10,7 @@ use Livewire\WithPagination;
 
 new class extends Component
 {
-    use WithPagination;
+    use RequiresMarket, WithPagination;
 
     public const int PER_PAGE = 30;
 

@@ -4,6 +4,7 @@ use App\Enums\ReportReason;
 use App\Models\Listing;
 use App\Models\Message;
 use App\Models\Report;
+use App\Support\Concerns\RequiresMarket;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
@@ -16,6 +17,8 @@ use Livewire\Component;
  */
 new class extends Component
 {
+    use RequiresMarket;
+
     #[Locked]
     public string $type = 'listing';
 

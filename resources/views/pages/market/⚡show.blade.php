@@ -3,12 +3,15 @@
 use App\Models\Conversation;
 use App\Models\Listing;
 use App\Models\Message;
+use App\Support\Concerns\RequiresMarket;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 new class extends Component
 {
+    use RequiresMarket;
+
     public Listing $listing;
 
     public string $body = '';

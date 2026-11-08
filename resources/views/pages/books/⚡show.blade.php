@@ -649,7 +649,9 @@ new class extends Component
                     @endif
                 </dl>
 
-                @if ($this->canEditEdition)
+                @if ($this->edition->isFromPublisher())
+                    <p class="mt-3 text-xs text-ink-soft">✓ {{ __('Details from the publisher.') }}</p>
+                @elseif ($this->canEditEdition)
                     <button type="button" wire:click="editEdition" class="link mt-3 text-sm">{{ __('Correct book details') }}</button>
                 @else
                     <p class="mt-3 text-xs text-ink-soft">{{ __('Other libraries also have this edition, so its details cannot be changed here.') }}</p>

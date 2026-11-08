@@ -12,6 +12,7 @@
         ['route' => 'library.loans', 'active' => 'library.loans', 'label' => __('Loans')],
         ['route' => 'market.index', 'active' => ['market.index', 'market.show', 'market.create'], 'label' => __('Market'), 'show' => $marketEnabled],
         ['route' => 'messages.index', 'active' => ['messages.index', 'messages.show'], 'label' => __('Messages'), 'show' => $marketEnabled, 'badge' => $marketEnabled ? auth()->user()->unreadMessagesCount() : 0],
+        ['route' => 'publisher.index', 'active' => 'publisher.*', 'label' => __('Publisher'), 'show' => auth()->user()->publishers()->exists()],
         ['route' => 'profile.edit', 'active' => 'profile.edit', 'label' => __('Profile')],
     ];
     $links = array_filter($links, fn (array $link): bool => $link['show'] ?? true);

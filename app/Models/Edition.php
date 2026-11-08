@@ -125,6 +125,14 @@ class Edition extends Model
             : $this->cover_url);
     }
 
+    /**
+     * Entered by its publisher: the details are kept by the publisher, not by readers.
+     */
+    public function isFromPublisher(): bool
+    {
+        return $this->source === EditionSource::Publisher;
+    }
+
     public function hasCover(): bool
     {
         return $this->cover_path !== null || $this->cover_url !== null;

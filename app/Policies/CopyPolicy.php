@@ -69,10 +69,11 @@ class CopyPolicy
     /**
      * The shared catalog entry may be corrected only while no other library
      * holds this edition, so one family's fix never changes another's books.
+     * A book entered by its publisher is kept by the publisher only.
      */
     public function updateEdition(User $user, Copy $copy): bool
     {
-        return $this->update($user, $copy) && $copy->edition->isHeldOnlyBy($copy->library);
+        return $this->update($user, $copy) && $this->libraryMayChangeEdition($copy);
     }
 
     /**
@@ -82,7 +83,7 @@ class CopyPolicy
     public function updateGenres(User $user, Copy $copy): bool
     {
         return $this->update($user, $copy)
-            && (! $copy->edition->genres()->exists() || $copy->edition->isHeldOnlyBy($copy->library));
+            && (! $copy->edition->genres()->exists() || $this->libraryMayChangeEdition($copy));
     }
 
     /**
@@ -92,6 +93,11 @@ class CopyPolicy
     public function updateCover(User $user, Copy $copy): bool
     {
         return $this->update($user, $copy)
-            && (! $copy->edition->hasCover() || $copy->edition->isHeldOnlyBy($copy->library));
+            && (! $copy->edition->hasCover() || $this->libraryMayChangeEdition($copy));
+    }
+
+    private function libraryMayChangeEdition(Copy $copy): bool
+    {
+        return ! $copy->edition->isFromPublisher() && $copy->edition->isHeldOnlyBy($copy->library);
     }
 }

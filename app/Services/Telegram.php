@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\User;
+use Closure;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Traits\Localizable;
 
 /**
  * Talks to the Telegram Bot API. The bot token is part of every API address, so
@@ -17,6 +20,8 @@ use Illuminate\Support\Facades\Log;
  */
 class Telegram
 {
+    use Localizable;
+
     /** How old a Login Widget answer may be, so a captured link stops working soon. */
     public const int LOGIN_MAX_AGE_SECONDS = 300;
 
@@ -97,16 +102,24 @@ class Telegram
     }
 
     /**
-     * A short message to the site's admin (TELEGRAM_ADMIN_ID). Does nothing without
-     * a token or an admin id; never throws, so the caller's work always goes on.
+     * A short message to the site's admin (TELEGRAM_ADMIN_ID), written by the closure
+     * in the admin's language: that of the account connected to the admin id, else
+     * the site default. Does nothing without a token or an admin id; never throws,
+     * so the caller's work always goes on.
+     *
+     * @param  Closure(): string  $message
      */
-    public function notifyAdmin(string $text): void
+    public function notifyAdmin(Closure $message): void
     {
         $chatId = $this->adminChatId();
 
-        if ($chatId !== null && $this->hasToken()) {
-            $this->sendMessage($chatId, $text);
+        if ($chatId === null || ! $this->hasToken()) {
+            return;
         }
+
+        $locale = User::query()->where('telegram_chat_id', $chatId)->value('locale') ?? config('app.locale');
+
+        $this->sendMessage($chatId, $this->withLocale($locale, $message));
     }
 
     /**

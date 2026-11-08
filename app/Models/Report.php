@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Support\Traits\Localizable;
 
 /**
  * Someone's complaint about a listing or a message, for the super admin to review.
@@ -22,7 +21,7 @@ use Illuminate\Support\Traits\Localizable;
 class Report extends Model
 {
     /** @use HasFactory<ReportFactory> */
-    use HasFactory, Localizable;
+    use HasFactory;
 
     public const int MAX_PER_HOUR = 10;
 
@@ -83,20 +82,11 @@ class Report extends Model
             return;
         }
 
-        $telegram = app(Telegram::class);
-
-        if ($telegram->adminChatId() === null || ! $telegram->hasToken()) {
-            return;
-        }
-
-        // In the admin's language: the account connected to that Telegram, else the site default.
-        $locale = User::query()->where('telegram_chat_id', $telegram->adminChatId())->value('locale') ?? config('app.locale');
-
-        $telegram->notifyAdmin($this->withLocale($locale, fn (): string => __('New report on Kitobiy: :what, reason: :reason. Review it: :url', [
+        app(Telegram::class)->notifyAdmin(fn (): string => __('New report on Kitobiy: :what, reason: :reason. Review it: :url', [
             'what' => $this->reportable_type === 'message' ? __('a message') : __('a listing'),
             'reason' => $this->reason->label(),
             'url' => route('admin.reports.index'),
-        ])));
+        ]));
     }
 
     /**

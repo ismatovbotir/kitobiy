@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Publisher;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -25,6 +26,18 @@ class PublisherFactory extends Factory
             'wikidata_id' => null,
             'is_verified' => false,
         ];
+    }
+
+    /**
+     * With a person who keeps its book list (approved), or who asked to (not approved).
+     */
+    public function withMember(User $user, bool $approved = true): static
+    {
+        return $this->afterCreating(fn (Publisher $publisher) => $publisher->members()->attach($user, [
+            'position' => 'Editor',
+            'phone' => '+998 90 123 45 67',
+            'approved_at' => $approved ? now() : null,
+        ]));
     }
 
     /**

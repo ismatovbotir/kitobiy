@@ -38,6 +38,23 @@ return new class extends Migration
             $table->index('name');
             $table->index('search_name');
         });
+
+        // People who keep a publisher's book list. A claim waits for a super admin (approved_at null).
+        Schema::create('publisher_user', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('publisher_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            // Their job at the publisher and a phone number, so the super admin can check the claim.
+            $table->string('position', 100);
+            $table->string('phone', 30);
+            $table->timestamp('approved_at')->nullable();
+            $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
+
+            $table->unique(['publisher_id', 'user_id']);
+            $table->index('user_id');
+            $table->index('approved_at');
+        });
     }
 
     /**
@@ -45,6 +62,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('publisher_user');
         Schema::dropIfExists('publisher_aliases');
         Schema::dropIfExists('publishers');
     }

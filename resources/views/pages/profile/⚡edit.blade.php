@@ -323,4 +323,10 @@ new class extends Component
             </ul>
         </section>
     @endif
+
+    <section class="mt-6 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
+        <h2 class="font-serif text-xl font-semibold">{{ __('For publishers') }}</h2>
+        <p class="mt-1 text-sm text-ink-soft">{{ __('Work at a publisher? Add its books to Kitobiy, so readers find them by scanning the barcode.') }}</p>
+        <a href="{{ route('publisher.index') }}" wire:navigate class="link mt-2 inline-block text-sm">{{ __('Open the publisher area') }}</a>
+    </section>
 </div>

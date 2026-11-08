@@ -8,6 +8,7 @@ use Database\Factories\PublisherFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -66,6 +67,29 @@ class Publisher extends Model
     }
 
     /**
+     * People who keep this publisher's book list, and people waiting for their
+     * claim to be approved (pivot approved_at null).
+     *
+     * @return BelongsToMany<User, $this, PublisherMember, 'membership'>
+     */
+    public function members(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)
+            ->using(PublisherMember::class)
+            ->as('membership')
+            ->withPivot('id', 'position', 'phone', 'approved_at', 'approved_by')
+            ->withTimestamps();
+    }
+
+    /**
+     * Whether the user is an approved member, so may keep the book list.
+     */
+    public function isManagedBy(User $user): bool
+    {
+        return $this->members()->whereKey($user->getKey())->wherePivotNotNull('approved_at')->exists();
+    }
+
+    /**
      * Whether any edition names this publisher.
      */
     public function isUsed(): bool
@@ -85,6 +109,11 @@ class Publisher extends Model
 
         DB::transaction(function () use ($target): void {
             $this->editions()->update(['publisher_id' => $target->id]);
+            // People already with the target keep that membership; the rest move along.
+            PublisherMember::query()
+                ->where('publisher_id', $this->id)
+                ->whereNotIn('user_id', PublisherMember::query()->where('publisher_id', $target->id)->select('user_id'))
+                ->update(['publisher_id' => $target->id]);
             $target->absorbNamesOf($this);
             $target->fillMissingFrom($this, ['country', 'city', 'website', 'wikidata_id']);
             $this->delete();

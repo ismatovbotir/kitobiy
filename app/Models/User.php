@@ -236,6 +236,20 @@ class User extends Authenticatable implements HasLocalePreference
     }
 
     /**
+     * Publishers whose book list this person keeps, or has asked to (pivot approved_at null).
+     *
+     * @return BelongsToMany<Publisher, $this, PublisherMember, 'membership'>
+     */
+    public function publishers(): BelongsToMany
+    {
+        return $this->belongsToMany(Publisher::class)
+            ->using(PublisherMember::class)
+            ->as('membership')
+            ->withPivot('id', 'position', 'phone', 'approved_at', 'approved_by')
+            ->withTimestamps();
+    }
+
+    /**
      * Libraries the user belongs to, with their role on the pivot. A user may
      * belong to many libraries and works in one at a time (currentLibrary).
      *

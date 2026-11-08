@@ -54,6 +54,10 @@ Route::middleware(['auth', 'confirmed'])->group(function () {
     Route::livewire('/profile', 'pages::profile.edit')->name('profile.edit');
     Route::livewire('/libraries', 'pages::library.index')->name('libraries.index');
     Route::post('/libraries/{library}/switch', SwitchLibraryController::class)->name('libraries.switch');
+    Route::livewire('/publisher', 'pages::publisher.index')->name('publisher.index');
+    Route::livewire('/publisher/{publisher}', 'pages::publisher.books')->whereNumber('publisher')->name('publisher.books');
+    Route::livewire('/publisher/{publisher}/books/add', 'pages::publisher.book')->whereNumber('publisher')->name('publisher.books.create');
+    Route::livewire('/publisher/{publisher}/books/{edition}', 'pages::publisher.book')->whereNumber(['publisher', 'edition'])->scopeBindings()->name('publisher.books.edit');
 });
 
 Route::middleware(['auth', 'confirmed', 'can:super-admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -62,6 +66,7 @@ Route::middleware(['auth', 'confirmed', 'can:super-admin'])->prefix('admin')->na
     Route::livewire('/authors/{author}', 'pages::admin.authors.edit')->whereNumber('author')->name('authors.edit');
     Route::livewire('/publishers', 'pages::admin.publishers.index')->name('publishers.index');
     Route::livewire('/publishers/create', 'pages::admin.publishers.edit')->name('publishers.create');
+    Route::livewire('/publishers/claims', 'pages::admin.publishers.claims')->name('publishers.claims');
     Route::livewire('/publishers/{publisher}', 'pages::admin.publishers.edit')->whereNumber('publisher')->name('publishers.edit');
     Route::livewire('/genres', 'pages::admin.genres.index')->name('genres.index');
     Route::livewire('/reports', 'pages::admin.reports.index')->name('reports.index');

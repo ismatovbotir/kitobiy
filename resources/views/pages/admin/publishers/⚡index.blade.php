@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Publisher;
+use App\Models\PublisherMember;
 use App\Support\Concerns\RequiresSuperAdmin;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Livewire\Attributes\Computed;
@@ -30,6 +31,12 @@ new class extends Component {
     /**
      * @return LengthAwarePaginator<int, Publisher>
      */
+    #[Computed]
+    public function waitingClaims(): int
+    {
+        return PublisherMember::query()->whereNull('approved_at')->count();
+    }
+
     #[Computed]
     public function publishers(): LengthAwarePaginator
     {
@@ -65,7 +72,10 @@ new class extends Component {
             <h1 class="font-serif text-3xl font-semibold">{{ __('Publishers') }}</h1>
             <p class="mt-2 text-ink-soft">{{ __('Publishing houses shared by every library.') }}</p>
         </div>
-        <a href="{{ route('admin.publishers.create') }}" wire:navigate class="btn-primary w-auto">{{ __('New publisher') }}</a>
+        <div class="flex flex-wrap items-center gap-3">
+            <a href="{{ route('admin.publishers.claims') }}" wire:navigate class="link text-sm">{{ __('Publisher requests') }}@if ($this->waitingClaims > 0) <span class="ml-1 rounded-full bg-accent px-1.5 text-xs font-semibold text-white">{{ $this->waitingClaims }}</span>@endif</a>
+            <a href="{{ route('admin.publishers.create') }}" wire:navigate class="btn-primary w-auto">{{ __('New publisher') }}</a>
+        </div>
     </div>
 
     <x-admin-filters class="mt-6" :placeholder="__('Search by name or other spelling')" />

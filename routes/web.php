@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\TelegramLoginController;
-use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\SwitchLibraryController;
@@ -10,6 +9,7 @@ use App\Http\Controllers\TelegramWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->middleware('guest')->name('home');
+Route::view('/about', 'about')->name('about');
 
 Route::post('/locale/{locale}', LocaleController::class)->name('locale.update');
 
@@ -31,14 +31,11 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::livewire('/email/verify', 'pages::auth.verify-email')->name('verification.notice');
-    Route::get('/email/verify/{id}/{hash}', VerifyEmailController::class)
-        ->middleware(['signed', 'throttle:6,1'])
-        ->name('verification.verify');
+    Route::livewire('/confirm', 'pages::auth.confirm')->name('confirmation.notice');
     Route::post('/logout', LogoutController::class)->name('logout');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'confirmed'])->group(function () {
     Route::livewire('/dashboard', 'pages::dashboard')->name('dashboard');
     Route::livewire('/books', 'pages::books.index')->name('books.index');
     Route::livewire('/books/add', 'pages::books.create')->name('books.create');
@@ -59,7 +56,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/libraries/{library}/switch', SwitchLibraryController::class)->name('libraries.switch');
 });
 
-Route::middleware(['auth', 'verified', 'can:super-admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'confirmed', 'can:super-admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::livewire('/', 'pages::admin.dashboard')->name('dashboard');
     Route::livewire('/authors', 'pages::admin.authors.index')->name('authors.index');
     Route::livewire('/authors/{author}', 'pages::admin.authors.edit')->whereNumber('author')->name('authors.edit');

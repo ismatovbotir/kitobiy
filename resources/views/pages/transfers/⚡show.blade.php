@@ -19,7 +19,7 @@ new class extends Component
     public string $libraryId = '';
 
     /**
-     * Guests and unverified users are sent back here once they can accept.
+     * Guests and unconfirmed users are sent back here once they can accept.
      */
     public function mount(string $token): void
     {
@@ -29,7 +29,7 @@ new class extends Component
 
         $user = auth()->user();
 
-        if ($user === null || ! $user->hasVerifiedEmail()) {
+        if ($user === null || $user->needsConfirmation()) {
             session()->put('url.intended', route('transfers.show', $token));
         }
 
@@ -88,8 +88,8 @@ new class extends Component
             return null;
         }
 
-        if (! $user->hasVerifiedEmail()) {
-            return __('Verify your email first, then open this link again.');
+        if ($user->needsConfirmation()) {
+            return __('Confirm your account in Telegram first, then open this link again.');
         }
 
         if ($this->targetLibraries->isEmpty()) {

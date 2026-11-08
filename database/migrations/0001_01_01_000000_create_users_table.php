@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            // Set when the person proves they are real: pressing Start in the Telegram bot (SMS later).
+            $table->timestamp('confirmed_at')->nullable();
             $table->string('password');
             $table->char('country_code', 2)->nullable();
             // An ISO 3166-2 code for Uzbekistan (UZ-AN), typed text for other countries.

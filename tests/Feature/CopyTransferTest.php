@@ -231,14 +231,15 @@ class CopyTransferTest extends TestCase
         $this->get(route('transfers.show', 'nope'))->assertNotFound();
     }
 
-    public function test_unverified_user_must_verify_first(): void
+    public function test_unconfirmed_user_must_confirm_first(): void
     {
-        $unverified = User::factory()->unverified()->create();
-        Library::factory()->ownedBy($unverified)->create();
+        $this->withTelegramBot();
+        $unconfirmed = User::factory()->unconfirmed()->create();
+        Library::factory()->ownedBy($unconfirmed)->create();
 
-        Livewire::actingAs($unverified)
+        Livewire::actingAs($unconfirmed)
             ->test('pages::transfers.show', ['token' => $this->offeredTransfer()->token])
-            ->assertSee(__('Verify your email first, then open this link again.'))
+            ->assertSee(__('Confirm your account in Telegram first, then open this link again.'))
             ->call('accept')
             ->assertForbidden();
     }

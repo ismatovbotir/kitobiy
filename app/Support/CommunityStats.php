@@ -61,7 +61,7 @@ class CommunityStats
      */
     private static function countedReaders(): Builder
     {
-        return User::query()->whereNotNull('email_verified_at')->whereNull('suspended_at');
+        return User::query()->whereNotNull('confirmed_at')->whereNull('suspended_at');
     }
 
     /**
@@ -78,7 +78,7 @@ class CommunityStats
             ->join('users', 'users.id', '=', 'library_user.user_id')
             ->where('library_user.role', LibraryRole::Owner->value)
             ->where('copies.hidden_from_gift_page', false)
-            ->whereNotNull('users.email_verified_at')
+            ->whereNotNull('users.confirmed_at')
             ->whereNull('users.suspended_at')
             ->groupBy('copies.edition_id')
             ->havingRaw('count(distinct library_user.user_id) >= ?', [self::MIN_READERS_PER_ROW])

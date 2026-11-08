@@ -115,13 +115,15 @@ class CollectorProfileTest extends TestCase
         $this->assertTrue($other->collectorProfile()->sole()->isShared());
     }
 
-    public function test_editing_page_needs_a_verified_account(): void
+    public function test_editing_page_needs_a_confirmed_account(): void
     {
+        $this->withTelegramBot();
+
         $this->get(route('profile.edit'))->assertRedirect(route('login'));
 
-        $this->actingAs(User::factory()->unverified()->create())
+        $this->actingAs(User::factory()->unconfirmed()->create())
             ->get(route('profile.edit'))
-            ->assertRedirect(route('verification.notice'));
+            ->assertRedirect(route('confirmation.notice'));
     }
 
     /**

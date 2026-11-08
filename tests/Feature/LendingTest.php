@@ -225,7 +225,7 @@ class LendingTest extends TestCase
         $this->assertNull($this->copy->activeLoan());
     }
 
-    public function test_guest_returns_to_the_link_and_unverified_user_must_verify(): void
+    public function test_guest_returns_to_the_link_and_unconfirmed_user_must_confirm(): void
     {
         $link = $this->copy->offerLoan($this->owner, null);
         $url = route('loans.show', $link->token);
@@ -234,12 +234,13 @@ class LendingTest extends TestCase
 
         Livewire::test('pages::loans.show', ['token' => $link->token])->call('accept')->assertForbidden();
 
-        $unverified = User::factory()->unverified()->create();
-        Library::factory()->ownedBy($unverified)->create();
+        $this->withTelegramBot();
+        $unconfirmed = User::factory()->unconfirmed()->create();
+        Library::factory()->ownedBy($unconfirmed)->create();
 
-        Livewire::actingAs($unverified)
+        Livewire::actingAs($unconfirmed)
             ->test('pages::loans.show', ['token' => $link->token])
-            ->assertSee(__('Verify your email first, then open this link again.'))
+            ->assertSee(__('Confirm your account in Telegram first, then open this link again.'))
             ->call('accept')
             ->assertForbidden();
     }

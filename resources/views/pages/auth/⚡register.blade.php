@@ -5,7 +5,6 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
 use Livewire\Component;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 new class extends Component {
     public string $name = '';
@@ -17,9 +16,9 @@ new class extends Component {
     public string $password_confirmation = '';
 
     /**
-     * Create the account in the current interface language, sign in and send
-     * the email confirmation link. A failed mail does not block sign-up: the
-     * confirmation page can send it again.
+     * Create the account in the current interface language and sign in. The
+     * email is not checked: the `confirmed` middleware sends the new user to
+     * the Telegram confirmation page, which then continues to the intended page.
      */
     public function register(): void
     {
@@ -35,11 +34,7 @@ new class extends Component {
         Auth::login($user);
         session()->regenerate();
 
-        try {
-            event(new Registered($user));
-        } catch (TransportExceptionInterface $exception) {
-            report($exception);
-        }
+        event(new Registered($user));
 
         $this->redirectIntended(route('dashboard', absolute: false), navigate: true);
     }

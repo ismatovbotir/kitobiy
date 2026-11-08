@@ -3,6 +3,7 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Component\Mailer\SentMessage;
@@ -18,6 +19,21 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
 
         $this->withoutVite();
+    }
+
+    /**
+     * A configured bot (with faked Telegram answers), so unconfirmed accounts
+     * have to confirm. Without it nobody waits on the confirmation page.
+     */
+    protected function withTelegramBot(): void
+    {
+        config([
+            'services.telegram.token' => '123456:test-bot-token',
+            'services.telegram.bot_username' => 'KitobiyTestBot',
+            'services.telegram.webhook_secret' => 'test-webhook-secret',
+        ]);
+
+        Http::fake(['api.telegram.org/*' => Http::response(['ok' => true])]);
     }
 
     /**

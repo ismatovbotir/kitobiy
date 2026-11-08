@@ -47,10 +47,10 @@ class CommunityStatsTest extends TestCase
             ->assertDontSee('The first page of the register');
     }
 
-    public function test_unverified_and_suspended_people_are_not_counted(): void
+    public function test_unconfirmed_and_suspended_people_are_not_counted(): void
     {
         User::factory()->create();
-        User::factory()->unverified()->create();
+        User::factory()->unconfirmed()->create();
         User::factory()->create()->suspend();
 
         $this->assertSame(1, CommunityStats::current()['readers']);

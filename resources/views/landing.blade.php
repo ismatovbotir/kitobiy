@@ -95,6 +95,7 @@
             <a href="{{ route('home') }}"><x-wordmark /></a>
             <div class="flex flex-wrap items-center gap-3">
                 <x-locale-switcher />
+                <a href="{{ route('about') }}" class="link text-sm">{{ __('About the project') }}</a>
                 <a href="{{ route('login') }}" class="link text-sm">{{ __('Log in') }}</a>
             </div>
         </header>
@@ -249,6 +250,7 @@
                     @endforeach
                 </ol>
                 <p class="mt-3 text-sm text-ink-soft">{{ __('The translations on this page are our own.') }}</p>
+                <a href="{{ route('about') }}" class="link mt-6 inline-block text-sm">{{ __('About the project') }}</a>
             </div>
         </footer>
     </body>

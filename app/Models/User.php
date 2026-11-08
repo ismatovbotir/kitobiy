@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use App\Enums\LibraryRole;
+use App\Services\Telegram;
 use Database\Factories\UserFactory;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -19,7 +19,7 @@ use InvalidArgumentException;
 
 #[Fillable(['name', 'email', 'locale', 'password', 'country_code', 'region', 'city', 'birth_date'])]
 #[Hidden(['password', 'remember_token', 'telegram_chat_id', 'telegram_link_token', 'country_code', 'region', 'city', 'birth_date'])]
-class User extends Authenticatable implements HasLocalePreference, MustVerifyEmail
+class User extends Authenticatable implements HasLocalePreference
 {
     public const int MAX_OWNED_LIBRARIES = 5;
 
@@ -39,7 +39,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
+            'confirmed_at' => 'datetime',
             'password' => 'hashed',
             'birth_date' => 'date',
             'is_super_admin' => 'boolean',
@@ -67,6 +67,23 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     }
 
     /**
+     * Confirmed accounts proved they are a real person. The email is not checked.
+     */
+    public function isConfirmed(): bool
+    {
+        return $this->confirmed_at !== null;
+    }
+
+    /**
+     * Unconfirmed accounts wait on the confirmation page. Without a bot there is
+     * no way to confirm, so nobody waits (local development, or a missing token).
+     */
+    public function needsConfirmation(): bool
+    {
+        return ! $this->isConfirmed() && app(Telegram::class)->isConfigured();
+    }
+
+    /**
      * A one-time link that opens the bot and connects this account. Only its hash
      * is stored, so a database leak can't be used to connect someone's account.
      */
@@ -83,8 +100,9 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     }
 
     /**
-     * Connect the chat that pressed Start. A chat belongs to one account, so any
-     * earlier account of that chat is disconnected. Returns null for a bad or old link.
+     * Connect the chat that pressed Start, which also confirms the account. A chat
+     * belongs to one account, so any earlier account of that chat is disconnected
+     * (it stays confirmed). Returns null for a bad or old link.
      */
     public static function connectTelegramByToken(string $token, int $chatId): ?self
     {
@@ -105,6 +123,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
                 'telegram_chat_id' => $chatId,
                 'telegram_link_token' => null,
                 'telegram_link_expires_at' => null,
+                'confirmed_at' => $user->confirmed_at ?? now(),
             ])->save();
 
             return $user;

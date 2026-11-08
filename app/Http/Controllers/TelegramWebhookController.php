@@ -50,9 +50,11 @@ class TelegramWebhookController extends Controller
     {
         $user = User::connectTelegramByToken($token, $chatId);
 
-        return $this->withLocaleOf($user, fn (): string => $user
-            ? __('Connected to the Kitobiy account of :name. If this is not you, send /stop.', ['name' => $user->name])
-            : __('This link has expired. Open your profile on Kitobiy and press “Connect Telegram” again.'));
+        return $this->withLocaleOf($user, fn (): string => match (true) {
+            $user === null => __('This link has expired. Go back to Kitobiy and get a new link.'),
+            $user->wasChanged('confirmed_at') => __('The Kitobiy account of :name is confirmed. You can go back to the site. If this is not you, send /stop.', ['name' => $user->name]),
+            default => __('Connected to the Kitobiy account of :name. If this is not you, send /stop.', ['name' => $user->name]),
+        });
     }
 
     private function disconnect(?User $user): string

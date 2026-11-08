@@ -8,9 +8,9 @@
             <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 pt-4 pb-2">
                 <div class="flex min-w-0 items-center gap-2">
                     <a href="{{ route('dashboard') }}" wire:navigate><x-wordmark /></a>
-                    @if (auth()->user()->hasVerifiedEmail())
+                    @unless (auth()->user()->needsConfirmation())
                         <x-library-switcher />
-                    @endif
+                    @endunless
                 </div>
 
                 <div class="flex items-center gap-4">

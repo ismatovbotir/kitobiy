@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureAccountIsConfirmed;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -16,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             SetLocale::class,
         ]);
+
+        $middleware->alias(['confirmed' => EnsureAccountIsConfirmed::class]);
 
         // Telegram can't send a CSRF token; the webhook checks its own secret instead.
         $middleware->validateCsrfTokens(except: ['telegram/webhook']);

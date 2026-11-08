@@ -45,12 +45,12 @@ class DatabaseSeeder extends Seeder
 
         $owner = User::firstOrCreate(
             ['email' => 'test@example.com'],
-            ['name' => 'Test User', 'password' => Hash::make('password'), 'email_verified_at' => now()],
+            ['name' => 'Test User', 'password' => Hash::make('password'), 'confirmed_at' => now()],
         );
 
         $member = User::firstOrCreate(
             ['email' => 'member@example.com'],
-            ['name' => 'Family Member', 'password' => Hash::make('password'), 'email_verified_at' => now()],
+            ['name' => 'Family Member', 'password' => Hash::make('password'), 'confirmed_at' => now()],
         );
 
         $library = Library::create([

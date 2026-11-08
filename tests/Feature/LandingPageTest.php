@@ -54,6 +54,52 @@ class LandingPageTest extends TestCase
         }
     }
 
+    public function test_landing_page_links_to_the_about_page(): void
+    {
+        $this->get(route('home'))->assertSee(route('about'));
+    }
+
+    public function test_about_page_tells_the_story_in_the_chosen_language(): void
+    {
+        $this->get(route('about'))
+            ->assertOk()
+            ->assertSee('Kitobiy haqida')
+            ->assertSee(route('register'));
+
+        $this->post(route('locale.update', 'ru'));
+
+        $this->get(route('about'))
+            ->assertSee('lang="ru"', false)
+            ->assertSee('Короткое предисловие для тех, кто любит книги');
+    }
+
+    public function test_search_engines_may_index_the_about_page(): void
+    {
+        $this->get(route('about'))
+            ->assertDontSee('noindex')
+            ->assertSee('name="description"', false)
+            ->assertSee('rel="canonical"', false);
+    }
+
+    public function test_every_saying_on_the_about_page_links_to_its_source(): void
+    {
+        $response = $this->get(route('about'));
+
+        foreach (range(1, 2) as $note) {
+            $response->assertSee('href="#note-'.$note.'"', false)
+                ->assertSee('id="note-'.$note.'"', false);
+        }
+    }
+
+    public function test_signed_in_user_reads_the_about_page_without_a_sign_up_invitation(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->get(route('about'))
+            ->assertOk()
+            ->assertSee(route('dashboard'))
+            ->assertDontSee(route('register'));
+    }
+
     public function test_market_is_not_promised_even_while_it_is_on(): void
     {
         config(['market.enabled' => true]);

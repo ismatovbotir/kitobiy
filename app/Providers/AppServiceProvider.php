@@ -2,10 +2,10 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\EnsureAccountIsConfirmed;
 use App\Models\Listing;
 use App\Models\Message;
 use App\Models\User;
-use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
@@ -43,7 +43,7 @@ class AppServiceProvider extends ServiceProvider
         // The /admin area: shared reference data (authors, publishers, genres) and imports.
         Gate::define('super-admin', fn (User $user): bool => $user->isSuperAdmin());
 
-        // Livewire updates re-run the page's `verified` middleware too.
-        Livewire::addPersistentMiddleware([EnsureEmailIsVerified::class]);
+        // Livewire updates re-run the page's `confirmed` middleware too.
+        Livewire::addPersistentMiddleware([EnsureAccountIsConfirmed::class]);
     }
 }

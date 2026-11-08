@@ -4,26 +4,162 @@ namespace App\Services;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
  * Talks to the Telegram Bot API. The bot token is part of every API address, so
  * failures are logged without the request URL: the token must never reach a log.
+ *
+ * Only the token (and the admin's chat id) live in .env. The bot's username is
+ * asked from Telegram and cached; the webhook secret is derived from APP_KEY.
  */
 class Telegram
 {
     /** How old a Login Widget answer may be, so a captured link stops working soon. */
     public const int LOGIN_MAX_AGE_SECONDS = 300;
 
+    /** After Telegram could not tell the username, wait this long before asking again. */
+    public const int USERNAME_RETRY_SECONDS = 600;
+
+    /**
+     * The bot works once there is a token and Telegram has told us the bot's username.
+     */
     public function isConfigured(): bool
     {
-        return filled(config('services.telegram.token')) && filled(config('services.telegram.bot_username'));
+        return $this->hasToken() && $this->botUsername() !== null;
     }
 
+    public function hasToken(): bool
+    {
+        return filled(config('services.telegram.token'));
+    }
+
+    /**
+     * The username without @: TELEGRAM_BOT_USERNAME when set, else asked from
+     * Telegram once and kept. A failed answer is not asked again for 10 minutes,
+     * so pages never keep waiting on an unreachable Telegram.
+     */
     public function botUsername(): ?string
     {
-        return config('services.telegram.bot_username');
+        $configured = config('services.telegram.bot_username');
+
+        if (filled($configured)) {
+            return ltrim((string) $configured, '@');
+        }
+
+        if (! $this->hasToken()) {
+            return null;
+        }
+
+        $key = $this->cacheKey('bot-username');
+        $cached = Cache::get($key);
+
+        if (is_string($cached)) {
+            return $cached;
+        }
+
+        if (Cache::has($key.':failed')) {
+            return null;
+        }
+
+        return $this->refreshBotUsername();
+    }
+
+    /**
+     * Ask Telegram who the bot is and keep the answer.
+     */
+    public function refreshBotUsername(): ?string
+    {
+        $username = $this->call('getMe', [])?->json('result.username');
+
+        if (! is_string($username) || $username === '') {
+            Cache::put($this->cacheKey('bot-username').':failed', true, self::USERNAME_RETRY_SECONDS);
+
+            return null;
+        }
+
+        Cache::forever($this->cacheKey('bot-username'), $username);
+        Cache::forget($this->cacheKey('bot-username').':failed');
+
+        return $username;
+    }
+
+    /**
+     * The Telegram user id of the site's admin (TELEGRAM_ADMIN_ID), for test and admin messages.
+     */
+    public function adminChatId(): ?int
+    {
+        $id = config('services.telegram.admin_id');
+
+        return filled($id) && is_numeric($id) ? (int) $id : null;
+    }
+
+    /**
+     * Telegram sends this secret with every update. TELEGRAM_WEBHOOK_SECRET when set,
+     * else derived from APP_KEY (so a new APP_KEY needs the webhook set again).
+     */
+    public function webhookSecret(): string
+    {
+        $configured = config('services.telegram.webhook_secret');
+
+        return filled($configured) ? (string) $configured : hash_hmac('sha256', 'telegram-webhook', (string) config('app.key'));
+    }
+
+    public function webhookUrl(): string
+    {
+        return route('telegram.webhook');
+    }
+
+    /**
+     * Why the webhook can't be set from here, or null when it can.
+     */
+    public function webhookProblem(): ?string
+    {
+        if (! $this->hasToken()) {
+            return __('Set TELEGRAM_BOT_TOKEN in the .env file first.');
+        }
+
+        if (! str_starts_with($this->webhookUrl(), 'https://')) {
+            return __('Telegram needs an https address, but this site’s address is :url.', ['url' => $this->webhookUrl()]);
+        }
+
+        return null;
+    }
+
+    /**
+     * Point the bot at this site and refresh the cached username. Returns false when Telegram refused.
+     */
+    public function registerWebhook(): bool
+    {
+        if ($this->webhookProblem() !== null) {
+            return false;
+        }
+
+        if ($this->setWebhook($this->webhookUrl(), $this->webhookSecret())?->json('ok') !== true) {
+            return false;
+        }
+
+        $this->refreshBotUsername();
+
+        return true;
+    }
+
+    /**
+     * What Telegram knows about the webhook (url, pending_update_count, last_error_message…), or null.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function webhookInfo(): ?array
+    {
+        if (! $this->hasToken()) {
+            return null;
+        }
+
+        $result = $this->call('getWebhookInfo', [])?->json('result');
+
+        return is_array($result) ? $result : null;
     }
 
     /**
@@ -79,6 +215,11 @@ class Telegram
         $age = now()->timestamp - (int) $data['auth_date'];
 
         return $age >= -60 && $age <= self::LOGIN_MAX_AGE_SECONDS;
+    }
+
+    private function cacheKey(string $name): string
+    {
+        return 'telegram:'.$name.':'.substr(hash('sha256', (string) config('services.telegram.token')), 0, 16);
     }
 
     /**

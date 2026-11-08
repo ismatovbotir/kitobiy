@@ -65,6 +65,7 @@ Route::middleware(['auth', 'confirmed', 'can:super-admin'])->prefix('admin')->na
     Route::livewire('/publishers/{publisher}', 'pages::admin.publishers.edit')->whereNumber('publisher')->name('publishers.edit');
     Route::livewire('/genres', 'pages::admin.genres.index')->name('genres.index');
     Route::livewire('/reports', 'pages::admin.reports.index')->name('reports.index');
+    Route::livewire('/telegram', 'pages::admin.telegram')->name('telegram');
     Route::livewire('/labels', 'pages::admin.labels.index')->name('labels.index');
     Route::livewire('/labels/create', 'pages::admin.labels.edit')->name('labels.create');
     Route::livewire('/labels/{labelTemplate}/edit', 'pages::admin.labels.edit')->name('labels.edit');

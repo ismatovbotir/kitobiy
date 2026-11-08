@@ -15,33 +15,23 @@ class SetTelegramWebhook extends Command
     /**
      * @var string
      */
-    protected $description = 'Tell Telegram where to send the bot\'s messages (run once on the live server)';
+    protected $description = 'Tell Telegram where to send the bot\'s messages (the same as the button on /admin/telegram)';
 
     public function handle(Telegram $telegram): int
     {
-        $secret = config('services.telegram.webhook_secret');
-
-        if (! $telegram->isConfigured() || blank($secret)) {
-            $this->error('Set TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_USERNAME and TELEGRAM_WEBHOOK_SECRET first.');
+        if (($problem = $telegram->webhookProblem()) !== null) {
+            $this->error($problem);
 
             return self::FAILURE;
         }
 
-        $url = route('telegram.webhook');
-
-        if (! str_starts_with($url, 'https://')) {
-            $this->error("Telegram needs an https address, but this app's address is {$url}");
-
-            return self::FAILURE;
-        }
-
-        if ($telegram->setWebhook($url, $secret)?->successful() !== true) {
+        if (! $telegram->registerWebhook()) {
             $this->error('Telegram did not accept the webhook. See the log.');
 
             return self::FAILURE;
         }
 
-        $this->info("Webhook set to {$url}");
+        $this->info('Webhook set to '.$telegram->webhookUrl().' for @'.$telegram->botUsername());
 
         return self::SUCCESS;
     }

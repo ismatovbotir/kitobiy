@@ -49,8 +49,10 @@ return [
     'telegram' => [
         'url' => env('TELEGRAM_API_URL', 'https://api.telegram.org'),
         'token' => env('TELEGRAM_BOT_TOKEN'),
+        // Optional: asked from Telegram / derived from APP_KEY when empty.
         'bot_username' => env('TELEGRAM_BOT_USERNAME'),
         'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
+        'admin_id' => env('TELEGRAM_ADMIN_ID'),
         'timeout' => (int) env('TELEGRAM_TIMEOUT', 5),
     ],
 

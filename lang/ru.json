@@ -699,5 +699,8 @@
     "New report on Kitobiy: :what, reason: :reason. Review it: :url": "Новая жалоба в Kitobiy: :what, причина: :reason. Проверьте: :url",
     "a message": "сообщение",
     "a listing": "объявление",
-    "New reports about listings and messages also come to the admin id, without their text.": "Новые жалобы на объявления и сообщения тоже приходят на id администратора, без их текста."
+    "New reports about listings and messages also come to the admin id, without their text.": "Новые жалобы на объявления и сообщения тоже приходят на id администратора, без их текста.",
+    "Add straight away": "Добавлять сразу",
+    "Books already in Kitobiy are added without the details step, so you can scan a whole shelf. New books and books you already have still open the details.": "Книги, которые уже есть в Kitobiy, добавляются без шага с данными — можно отсканировать целую полку. Для новых книг и книг, которые у вас уже есть, данные всё равно откроются.",
+    "Tags for these books: :tags": "Теги для этих книг: :tags"
 }

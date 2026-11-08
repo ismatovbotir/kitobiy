@@ -699,5 +699,8 @@
     "New report on Kitobiy: :what, reason: :reason. Review it: :url": "Kitobiy’da yangi shikoyat: :what, sabab: :reason. Ko‘rib chiqing: :url",
     "a message": "xabar",
     "a listing": "e’lon",
-    "New reports about listings and messages also come to the admin id, without their text.": "E’lon va xabarlar haqidagi yangi shikoyatlar ham admin id’ga matnisiz keladi."
+    "New reports about listings and messages also come to the admin id, without their text.": "E’lon va xabarlar haqidagi yangi shikoyatlar ham admin id’ga matnisiz keladi.",
+    "Add straight away": "Darhol qo‘shish",
+    "Books already in Kitobiy are added without the details step, so you can scan a whole shelf. New books and books you already have still open the details.": "Kitobiy’da bor kitoblar ma’lumotlar bosqichisiz qo‘shiladi — butun javonni skanerlashingiz mumkin. Yangi kitoblar va sizda bor kitoblar uchun baribir ma’lumotlar ochiladi.",
+    "Tags for these books: :tags": "Bu kitoblar uchun teglar: :tags"
 }

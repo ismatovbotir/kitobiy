@@ -79,6 +79,62 @@ class AddBookTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_quick_add_puts_a_scanned_catalog_book_on_the_shelf_at_once(): void
+    {
+        $edition = Edition::factory()->create(['isbn_13' => '9780306406157']);
+        $tag = Tag::factory()->for($this->library)->create();
+
+        $this->page()
+            ->set('quickAdd', true)
+            ->set('tagIds', [(string) $tag->id])
+            ->set('isbn', '9780306406157')
+            ->call('lookup')
+            ->assertHasNoErrors()
+            ->assertSet('step', 'search')
+            ->assertSet('isbn', '')
+            ->assertDispatched('book-added-quickly')
+            ->assertSee(__('“:title” added to your library.', ['title' => $edition->title]));
+
+        $copy = $this->library->copies()->sole();
+        $this->assertTrue($copy->edition->is($edition));
+        $this->assertTrue($copy->tags->sole()->is($tag));
+        Http::assertNothingSent();
+    }
+
+    public function test_quick_add_stops_for_a_book_already_on_the_shelf_or_new_to_the_catalog(): void
+    {
+        $edition = Edition::factory()->create(['isbn_13' => '9780306406157']);
+        Copy::factory()->for($this->library)->for($edition)->create();
+        Http::fake(['openlibrary.org/*' => Http::response([]), 'www.googleapis.com/*' => Http::response(['totalItems' => 0])]);
+
+        $page = $this->page()->set('quickAdd', true);
+
+        $page->set('isbn', '9780306406157')->call('lookup')
+            ->assertSet('step', 'details')
+            ->assertNotDispatched('book-added-quickly');
+
+        $page->call('backToSearch')->set('isbn', '9781861972712')->call('lookup')
+            ->assertSet('step', 'details')
+            ->assertNotDispatched('book-added-quickly');
+
+        $this->assertSame(1, $this->library->copies()->count());
+    }
+
+    public function test_quick_add_rejects_a_tag_of_another_library(): void
+    {
+        Edition::factory()->create(['isbn_13' => '9780306406157']);
+        $foreignTag = Tag::factory()->create();
+
+        $this->page()
+            ->set('quickAdd', true)
+            ->set('tagIds', [(string) $foreignTag->id])
+            ->set('isbn', '9780306406157')
+            ->call('lookup')
+            ->assertHasErrors('tagIds.0');
+
+        $this->assertSame(0, $this->library->copies()->count());
+    }
+
     public function test_catalog_edition_stored_only_with_isbn_10_is_found_by_isbn_13(): void
     {
         $edition = Edition::factory()->create(['isbn_13' => null, 'isbn_10' => '0306406152']);

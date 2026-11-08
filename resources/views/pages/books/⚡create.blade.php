@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\Session;
 use Livewire\Component;
 
 new class extends Component
@@ -82,6 +83,13 @@ new class extends Component
     public string $newTag = '';
 
     public string $notes = '';
+
+    /**
+     * Scanning a shelf: a book already in the catalog is added at once, without
+     * the details step, and the camera goes on to the next one. Remembered per session.
+     */
+    #[Session]
+    public bool $quickAdd = false;
 
     /**
      * Viewers only look at the books, so they can't open this page.
@@ -181,6 +189,13 @@ new class extends Component
         if ($edition !== null) {
             $this->editionId = $edition->id;
 
+            if ($this->quickAdd && $this->copiesAlreadyOwned === 0) {
+                $this->authorize('addBooks', $this->library);
+                $this->validate($this->copyRules());
+                $this->addCopyOf($edition);
+                $this->dispatch('book-added-quickly');
+            }
+
             return;
         }
 
@@ -247,19 +262,42 @@ new class extends Component
             ] : []),
             'genres' => ['array', 'max:'.Edition::MAX_GENRES],
             'genres.*' => ['string', Rule::exists('genres', 'slug')->where('is_active', true)],
-            'tagIds' => ['array'],
-            'tagIds.*' => ['integer', Rule::exists('tags', 'id')->where('library_id', $this->library->id)],
-            'newTag' => ['nullable', 'string', 'max:100'],
-            'notes' => ['nullable', 'string', 'max:2000'],
+            ...$this->copyRules(),
         ]);
 
-        $copy = DB::transaction(function (): Copy {
+        $this->addCopyOf(DB::transaction(function (): Edition {
             $edition = $this->edition ?? $this->findEditionByIsbn() ?? $this->createEdition();
 
             if ($this->genres !== [] && $edition->genres()->doesntExist()) {
                 $edition->syncGenres($this->genres);
             }
 
+            return $edition;
+        }));
+    }
+
+    /**
+     * Rules for what belongs to the copy: its tags and notes.
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    private function copyRules(): array
+    {
+        return [
+            'tagIds' => ['array'],
+            'tagIds.*' => ['integer', Rule::exists('tags', 'id')->where('library_id', $this->library->id)],
+            'newTag' => ['nullable', 'string', 'max:100'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ];
+    }
+
+    /**
+     * Put a copy of the edition on the shelf with the chosen tags and notes,
+     * then go back to the ISBN step for the next book.
+     */
+    private function addCopyOf(Edition $edition): void
+    {
+        $copy = DB::transaction(function () use ($edition): Copy {
             $tagIds = array_map('intval', $this->tagIds);
 
             if (trim($this->newTag) !== '') {
@@ -394,12 +432,16 @@ new class extends Component
         </form>
 
         {{-- Camera scanning: built-in BarcodeDetector where available, zxing-wasm fallback elsewhere (resources/js/barcode.js). Needs HTTPS. --}}
+        {{-- After a quick add the camera starts again; the book just added is ignored for a few seconds, as it is still in view. --}}
         <div wire:ignore class="mt-4"
+             x-on:book-added-quickly.window="navigator.vibrate?.(80); start()"
              x-data="{
                 supported: !! window.Kitobiy?.canScanBarcodes(),
                 scanning: false,
                 failed: false,
                 stream: null,
+                lastIsbn: null,
+                lastIsbnAt: 0,
                 async start() {
                     this.failed = false;
                     this.scanning = true;
@@ -411,8 +453,11 @@ new class extends Component
                         const tick = async () => {
                             if (! this.scanning) return;
                             const codes = await detector.detect(this.$refs.video).catch(() => []);
-                            const isbn = codes.map(code => code.rawValue).find(value => /^97[89]\d{10}$/.test(value));
+                            const isbn = codes.map(code => code.rawValue).find(value => /^97[89]\d{10}$/.test(value)
+                                && ! (value === this.lastIsbn && Date.now() - this.lastIsbnAt < 4000));
                             if (isbn) {
+                                this.lastIsbn = isbn;
+                                this.lastIsbnAt = Date.now();
                                 this.stop();
                                 $wire.isbn = isbn;
                                 $wire.lookup();
@@ -444,6 +489,17 @@ new class extends Component
                 </div>
             </template>
         </div>
+
+        <label class="mt-6 flex items-start gap-2 text-sm">
+            <input wire:model.live="quickAdd" type="checkbox" class="mt-0.5 rounded border-ink/30 text-accent">
+            <span>
+                <span class="font-medium">{{ __('Add straight away') }}</span>
+                <span class="block text-ink-soft">{{ __('Books already in Kitobiy are added without the details step, so you can scan a whole shelf. New books and books you already have still open the details.') }}</span>
+            </span>
+        </label>
+        @if ($quickAdd && $tagIds !== [])
+            <p class="mt-2 ml-6 text-sm text-ink-soft">{{ __('Tags for these books: :tags', ['tags' => $this->tags->whereIn('id', array_map('intval', $tagIds))->pluck('name')->join(', ')]) }}</p>
+        @endif
 
         <p class="mt-8 text-sm text-ink-soft">
             {{ __('No ISBN on the book?') }}

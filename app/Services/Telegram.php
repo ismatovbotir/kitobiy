@@ -97,6 +97,19 @@ class Telegram
     }
 
     /**
+     * A short message to the site's admin (TELEGRAM_ADMIN_ID). Does nothing without
+     * a token or an admin id; never throws, so the caller's work always goes on.
+     */
+    public function notifyAdmin(string $text): void
+    {
+        $chatId = $this->adminChatId();
+
+        if ($chatId !== null && $this->hasToken()) {
+            $this->sendMessage($chatId, $text);
+        }
+    }
+
+    /**
      * Telegram sends this secret with every update. TELEGRAM_WEBHOOK_SECRET when set,
      * else derived from APP_KEY (so a new APP_KEY needs the webhook set again).
      */

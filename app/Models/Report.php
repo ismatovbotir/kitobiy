@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ReportOutcome;
 use App\Enums\ReportReason;
+use App\Services\Telegram;
 use Database\Factories\ReportFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Traits\Localizable;
 
 /**
  * Someone's complaint about a listing or a message, for the super admin to review.
@@ -20,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class Report extends Model
 {
     /** @use HasFactory<ReportFactory> */
-    use HasFactory;
+    use HasFactory, Localizable;
 
     public const int MAX_PER_HOUR = 10;
 
@@ -61,6 +63,40 @@ class Report extends Model
     protected function open(Builder $query): void
     {
         $query->whereNull('resolved_at');
+    }
+
+    /**
+     * Tell the admin in Telegram, for the first open report about a piece of content
+     * only, so one listing reported by many people sends one message. The reported
+     * text and the people involved are left out.
+     */
+    public function notifyAdmin(): void
+    {
+        $alreadyReported = static::query()
+            ->open()
+            ->where('reportable_type', $this->reportable_type)
+            ->where('reportable_id', $this->reportable_id)
+            ->whereKeyNot($this->getKey())
+            ->exists();
+
+        if ($alreadyReported) {
+            return;
+        }
+
+        $telegram = app(Telegram::class);
+
+        if ($telegram->adminChatId() === null || ! $telegram->hasToken()) {
+            return;
+        }
+
+        // In the admin's language: the account connected to that Telegram, else the site default.
+        $locale = User::query()->where('telegram_chat_id', $telegram->adminChatId())->value('locale') ?? config('app.locale');
+
+        $telegram->notifyAdmin($this->withLocale($locale, fn (): string => __('New report on Kitobiy: :what, reason: :reason. Review it: :url', [
+            'what' => $this->reportable_type === 'message' ? __('a message') : __('a listing'),
+            'reason' => $this->reason->label(),
+            'url' => route('admin.reports.index'),
+        ])));
     }
 
     /**

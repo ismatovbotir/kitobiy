@@ -14,6 +14,8 @@ use App\Models\Message;
 use App\Models\Report;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request as ClientRequest;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -86,6 +88,73 @@ class ModerationTest extends TestCase
         }
 
         $this->assertSame(1, Report::query()->count());
+    }
+
+    private function report(Listing|Message $reportable, User $reporter): void
+    {
+        Livewire::actingAs($reporter)
+            ->test('report-form', ['type' => $reportable instanceof Message ? 'message' : 'listing', 'reportableId' => $reportable->id])
+            ->set('reason', ReportReason::Abuse->value)
+            ->set('details', 'Secret details')
+            ->call('send')
+            ->assertSet('sent', true);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function adminTelegramTexts(): array
+    {
+        return Http::recorded(fn (ClientRequest $request): bool => str_ends_with($request->url(), '/sendMessage') && $request['chat_id'] === 777000111)
+            ->map(fn (array $pair): string => (string) $pair[0]['text'])
+            ->values()
+            ->all();
+    }
+
+    public function test_the_first_report_about_content_tells_the_admin_in_telegram_without_the_text(): void
+    {
+        $this->withTelegramBot();
+        config(['services.telegram.admin_id' => '777000111']);
+
+        $this->report($this->message, $this->seller);
+        $this->report($this->listing, $this->buyer);
+        $this->report($this->listing, User::factory()->create());
+
+        $texts = $this->adminTelegramTexts();
+
+        $this->assertCount(2, $texts);
+        $this->assertStringContainsString(route('admin.reports.index'), $texts[0]);
+        $this->assertStringContainsString(ReportReason::Abuse->label(), $texts[0]);
+        foreach ($texts as $text) {
+            $this->assertStringNotContainsString('Rude message', $text);
+            $this->assertStringNotContainsString('Secret details', $text);
+            $this->assertStringNotContainsString('Xaridor', $text);
+        }
+
+        Report::query()->where('reportable_type', 'listing')->first()->resolve($this->admin, ReportOutcome::Dismissed);
+        $this->report($this->listing, User::factory()->create());
+
+        $this->assertCount(3, $this->adminTelegramTexts());
+    }
+
+    public function test_the_admin_notice_uses_the_admins_language(): void
+    {
+        $this->withTelegramBot();
+        config(['services.telegram.admin_id' => '777000111']);
+        $this->admin->forceFill(['telegram_chat_id' => 777000111, 'locale' => 'ru'])->save();
+
+        $this->report($this->listing, $this->buyer);
+
+        $this->assertStringContainsString('Новая жалоба', $this->adminTelegramTexts()[0]);
+    }
+
+    public function test_without_an_admin_id_no_telegram_is_sent(): void
+    {
+        $this->withTelegramBot();
+
+        $this->report($this->listing, $this->buyer);
+
+        Http::assertNotSent(fn (ClientRequest $request): bool => str_ends_with($request->url(), '/sendMessage'));
     }
 
     public function test_a_reason_is_required(): void

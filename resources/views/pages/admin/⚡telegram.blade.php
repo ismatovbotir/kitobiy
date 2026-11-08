@@ -162,6 +162,7 @@ new class extends Component {
     <section class="mt-6 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
         <h2 class="font-serif text-2xl font-semibold">{{ __('Test message') }}</h2>
         <p class="mt-1 text-sm text-ink-soft">{{ __('Sends a short message to the admin id, to check that the bot can write.') }}</p>
+        <p class="mt-1 text-sm text-ink-soft">{{ __('New reports about listings and messages also come to the admin id, without their text.') }}</p>
 
         @error('test') <p class="form-error mt-3">{{ $message }}</p> @enderror
 

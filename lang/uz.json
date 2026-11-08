@@ -695,5 +695,9 @@
     "Press it again after changing the domain or APP_KEY. For the login button, also send /setdomain to @BotFather.": "Domen yoki APP_KEY o‘zgargandan keyin uni qayta bosing. Kirish tugmasi uchun @BotFather’ga /setdomain ham yuboring.",
     "Test message": "Sinov xabari",
     "Sends a short message to the admin id, to check that the bot can write.": "Bot yoza olishini tekshirish uchun admin id’ga qisqa xabar yuboradi.",
-    "Send test message": "Sinov xabarini yuborish"
+    "Send test message": "Sinov xabarini yuborish",
+    "New report on Kitobiy: :what, reason: :reason. Review it: :url": "Kitobiy’da yangi shikoyat: :what, sabab: :reason. Ko‘rib chiqing: :url",
+    "a message": "xabar",
+    "a listing": "e’lon",
+    "New reports about listings and messages also come to the admin id, without their text.": "E’lon va xabarlar haqidagi yangi shikoyatlar ham admin id’ga matnisiz keladi."
 }

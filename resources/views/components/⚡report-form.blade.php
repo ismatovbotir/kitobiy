@@ -50,7 +50,7 @@ new class extends Component
 
         RateLimiter::hit($limiterKey, 3600);
 
-        Report::query()->firstOrCreate(
+        $report = Report::query()->firstOrCreate(
             [
                 'reporter_id' => auth()->id(),
                 'reportable_type' => $reportable->getMorphClass(),
@@ -61,6 +61,10 @@ new class extends Component
                 'details' => trim((string) $validated['details']) ?: null,
             ],
         );
+
+        if ($report->wasRecentlyCreated) {
+            $report->notifyAdmin();
+        }
 
         $this->sent = true;
     }

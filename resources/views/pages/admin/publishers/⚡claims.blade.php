@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Post;
 use App\Models\PublisherMember;
 use App\Notifications\PublisherClaimApproved;
 use App\Support\Concerns\RequiresSuperAdmin;
@@ -50,6 +51,8 @@ new class extends Component {
     {
         $member = PublisherMember::query()->whereNull('approved_at')->with('publisher', 'user')->findOrFail($memberId);
 
+        $isFirstMember = ! PublisherMember::query()->where('publisher_id', $member->publisher_id)->whereNotNull('approved_at')->exists();
+
         DB::transaction(function () use ($member): void {
             $member->forceFill(['approved_at' => now(), 'approved_by' => auth()->id()])->save();
             $member->publisher->forceFill(['is_verified' => true])->save();
@@ -59,6 +62,12 @@ new class extends Component {
 
         $this->refreshList();
         session()->flash('status', __(':name can now keep the book list of :publisher.', ['name' => $member->user->name, 'publisher' => $member->publisher->name]));
+
+        // Only the first approved person makes a "joined" announcement.
+        if ($isFirstMember && ! Post::query()->where('publisher_id', $member->publisher_id)->exists()) {
+            $draft = Post::draftForPublisherJoining($member->publisher, auth()->user());
+            session()->flash('news_draft', $draft->id);
+        }
     }
 
     /**
@@ -86,6 +95,12 @@ new class extends Component {
 
 <div>
     <x-flash class="mb-6" />
+    @if (session('news_draft'))
+        <p class="-mt-4 mb-6 rounded-lg bg-sky-50 px-3 py-2 text-sm text-sky-900 ring-1 ring-sky-200">
+            {{ __('A news draft about it is ready. Ask the publisher, then publish it.') }}
+            <a href="{{ route('admin.news.edit', session('news_draft')) }}" wire:navigate class="link">{{ __('Open the draft') }}</a>
+        </p>
+    @endif
 
     <a href="{{ route('admin.publishers.index') }}" wire:navigate class="link text-sm">← {{ __('Publishers') }}</a>
     <h1 class="mt-2 font-serif text-3xl font-semibold">{{ __('Publisher requests') }}</h1>

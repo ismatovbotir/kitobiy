@@ -31,6 +31,7 @@
                 <div class="flex items-center gap-4">
                     <a href="{{ route('home') }}"><x-wordmark /></a>
                     <a href="{{ route('catalog.index') }}" class="text-sm font-medium text-ink-soft hover:text-ink">{{ __('Catalog') }}</a>
+                    <a href="{{ route('news.index') }}" class="text-sm font-medium text-ink-soft hover:text-ink">{{ __('News') }}</a>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <x-locale-switcher />

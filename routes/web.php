@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\TelegramLoginController;
 use App\Http\Controllers\Catalog\CatalogController;
 use App\Http\Controllers\Catalog\CatalogVisibilityController;
+use App\Http\Controllers\Catalog\NewsController;
 use App\Http\Controllers\Catalog\SitemapController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LocaleController;
@@ -21,6 +22,10 @@ Route::middleware('throttle:120,1')->prefix('catalog')->name('catalog.')->contro
     Route::get('/people/{author}/{slug?}', 'person')->whereNumber('author')->name('people.show');
     Route::get('/publishers/{publisher}/{slug?}', 'publisher')->whereNumber('publisher')->name('publishers.show');
     Route::get('/genres/{genre:slug}', 'genre')->name('genres.show');
+});
+Route::middleware('throttle:120,1')->prefix('news')->name('news.')->controller(NewsController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::get('/{post:slug}', 'show')->name('show');
 });
 Route::get('/sitemap.xml', SitemapController::class)->middleware('throttle:30,1')->name('sitemap');
 
@@ -84,6 +89,9 @@ Route::middleware(['auth', 'confirmed', 'can:super-admin'])->prefix('admin')->na
     Route::livewire('/genres', 'pages::admin.genres.index')->name('genres.index');
     Route::livewire('/reports', 'pages::admin.reports.index')->name('reports.index');
     Route::livewire('/telegram', 'pages::admin.telegram')->name('telegram');
+    Route::livewire('/news', 'pages::admin.news.index')->name('news.index');
+    Route::livewire('/news/create', 'pages::admin.news.edit')->name('news.create');
+    Route::livewire('/news/{post:id}/edit', 'pages::admin.news.edit')->name('news.edit');
     Route::post('/catalog/{type}/{id}/visibility', CatalogVisibilityController::class)->whereIn('type', ['books', 'people', 'publishers'])->whereNumber('id')->name('catalog.visibility');
     Route::livewire('/labels', 'pages::admin.labels.index')->name('labels.index');
     Route::livewire('/labels/create', 'pages::admin.labels.edit')->name('labels.create');

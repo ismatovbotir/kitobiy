@@ -96,6 +96,7 @@
             <div class="flex flex-wrap items-center gap-3">
                 <x-locale-switcher />
                 <a href="{{ route('catalog.index') }}" class="link text-sm">{{ __('Catalog') }}</a>
+                <a href="{{ route('news.index') }}" class="link text-sm">{{ __('News') }}</a>
                 <a href="{{ route('about') }}" class="link text-sm">{{ __('About the project') }}</a>
                 <a href="{{ route('login') }}" class="link text-sm">{{ __('Log in') }}</a>
             </div>

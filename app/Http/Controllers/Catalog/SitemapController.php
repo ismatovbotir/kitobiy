@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Author;
 use App\Models\Edition;
 use App\Models\Genre;
+use App\Models\Post;
 use App\Models\Publisher;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
@@ -37,7 +38,12 @@ class SitemapController extends Controller
             ['loc' => route('home'), 'lastmod' => null],
             ['loc' => route('about'), 'lastmod' => null],
             ['loc' => route('catalog.index'), 'lastmod' => null],
+            ['loc' => route('news.index'), 'lastmod' => null],
         ];
+
+        foreach (Post::query()->published()->latest('published_at')->get() as $post) {
+            $urls[] = ['loc' => $post->publicUrl(), 'lastmod' => $post->updated_at?->toDateString()];
+        }
 
         foreach (Genre::query()->active()->ordered()->get() as $genre) {
             $urls[] = ['loc' => route('catalog.genres.show', $genre), 'lastmod' => null];

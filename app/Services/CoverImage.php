@@ -21,8 +21,9 @@ class CoverImage
 
     /**
      * Returns the stored path, or null when the file cannot be read as an image.
+     * Book covers use the defaults; other pictures (news) pass their own folder and size.
      */
-    public function store(UploadedFile $file): ?string
+    public function store(UploadedFile $file, string $directory = 'covers', int $maxWidth = self::MAX_WIDTH, int $maxHeight = self::MAX_HEIGHT): ?string
     {
         $photo = @imagecreatefromstring((string) file_get_contents($file->getRealPath()));
 
@@ -32,7 +33,7 @@ class CoverImage
 
         // Shrink first: rotating a full-size photo would hold two copies of it in memory.
         $angle = $this->rotationOf($file);
-        $cover = $this->resized($photo, sideways: $angle % 180 !== 0);
+        $cover = $this->resized($photo, $maxWidth, $maxHeight, sideways: $angle % 180 !== 0);
         unset($photo);
 
         if ($angle !== 0) {
@@ -41,7 +42,7 @@ class CoverImage
 
         ob_start();
         imagewebp($cover, null, self::WEBP_QUALITY);
-        $path = 'covers/'.Str::random(40).'.webp';
+        $path = $directory.'/'.Str::random(40).'.webp';
 
         return Storage::disk(config('catalog.cover_disk'))->put($path, (string) ob_get_clean()) ? $path : null;
     }
@@ -69,13 +70,13 @@ class CoverImage
      * Fits the photo inside the cover size on white, so a transparent PNG never
      * turns black. A photo still to be turned sideways uses the limits swapped.
      */
-    private function resized(GdImage $photo, bool $sideways): GdImage
+    private function resized(GdImage $photo, int $maxWidth, int $maxHeight, bool $sideways): GdImage
     {
         $width = imagesx($photo);
         $height = imagesy($photo);
         $scale = $sideways
-            ? min(1, self::MAX_HEIGHT / $width, self::MAX_WIDTH / $height)
-            : min(1, self::MAX_WIDTH / $width, self::MAX_HEIGHT / $height);
+            ? min(1, $maxHeight / $width, $maxWidth / $height)
+            : min(1, $maxWidth / $width, $maxHeight / $height);
         $coverWidth = max(1, (int) round($width * $scale));
         $coverHeight = max(1, (int) round($height * $scale));
 

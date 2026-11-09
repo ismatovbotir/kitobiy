@@ -98,6 +98,8 @@
         </div>
     </article>
 
+    <x-news-list class="mt-10" :posts="$news" />
+
     @if ($otherEditions->isNotEmpty())
         <section class="mt-10">
             <h2 class="font-serif text-xl font-semibold">{{ __('Other editions and translations') }}</h2>

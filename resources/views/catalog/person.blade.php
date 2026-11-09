@@ -17,6 +17,8 @@
         <p class="mt-1 text-sm text-ink-soft">{{ __('Also written as: :names', ['names' => $author->aliases->pluck('name')->join(', ')]) }}</p>
     @endif
 
+    <x-news-list class="mt-10" :posts="$news" />
+
     <h2 class="mt-8 font-serif text-xl font-semibold">{{ __('Books') }}</h2>
     <x-catalog-book-grid class="mt-3" :books="$books" />
 </x-catalog-layout>

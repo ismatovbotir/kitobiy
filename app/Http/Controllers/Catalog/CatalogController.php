@@ -8,12 +8,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Author;
 use App\Models\Edition;
 use App\Models\Genre;
+use App\Models\Post;
 use App\Models\Publisher;
 use App\Models\PublisherMember;
 use App\Support\PublicCatalog;
 use App\Support\SearchKey;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -95,6 +97,7 @@ class CatalogController extends Controller
                 ->limit(12)
                 ->get(),
             'indexable' => $edition->isIndexable(),
+            'news' => $this->newsAbout('edition_id', $edition->id),
         ]);
     }
 
@@ -115,6 +118,7 @@ class CatalogController extends Controller
                 ->orderBy('title')
                 ->paginate(PublicCatalog::PER_PAGE),
             'indexable' => ! $author->hidden_from_catalog && $author->isIndexable(),
+            'news' => $this->newsAbout('author_id', $author->id),
         ]);
     }
 
@@ -136,6 +140,7 @@ class CatalogController extends Controller
                 ->orderBy('title')
                 ->paginate(PublicCatalog::PER_PAGE),
             'indexable' => ! $publisher->hidden_from_catalog && $publisher->isIndexable(),
+            'news' => $this->newsAbout('publisher_id', $publisher->id),
         ]);
     }
 
@@ -151,6 +156,17 @@ class CatalogController extends Controller
                 ->orderBy('title')
                 ->paginate(PublicCatalog::PER_PAGE),
         ]);
+    }
+
+    /**
+     * The latest published news about a book, person or publisher.
+     *
+     * @param  'edition_id'|'author_id'|'publisher_id'  $column
+     * @return Collection<int, Post>
+     */
+    private function newsAbout(string $column, int $id): Collection
+    {
+        return Post::query()->published()->where($column, $id)->latest('published_at')->limit(3)->get();
     }
 
     /**

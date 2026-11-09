@@ -20,6 +20,8 @@ return new class extends Migration
             $table->char('country', 2)->nullable();
             $table->string('wikidata_id', 20)->nullable()->unique();
             $table->boolean('is_verified')->default(false);
+            // Set by a super admin to keep this record off the public catalog pages.
+            $table->boolean('hidden_from_catalog')->default(false);
             $table->timestamps();
 
             $table->index('name');

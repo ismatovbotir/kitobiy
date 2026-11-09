@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\TelegramLoginController;
+use App\Http\Controllers\Catalog\CatalogController;
+use App\Http\Controllers\Catalog\CatalogVisibilityController;
+use App\Http\Controllers\Catalog\SitemapController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\SwitchLibraryController;
@@ -10,6 +13,16 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->middleware('guest')->name('home');
 Route::view('/about', 'about')->name('about');
+
+// Public catalog: shared book facts only (App\Support\PublicCatalog).
+Route::middleware('throttle:120,1')->prefix('catalog')->name('catalog.')->controller(CatalogController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::get('/books/{edition}/{slug?}', 'book')->whereNumber('edition')->name('books.show');
+    Route::get('/people/{author}/{slug?}', 'person')->whereNumber('author')->name('people.show');
+    Route::get('/publishers/{publisher}/{slug?}', 'publisher')->whereNumber('publisher')->name('publishers.show');
+    Route::get('/genres/{genre:slug}', 'genre')->name('genres.show');
+});
+Route::get('/sitemap.xml', SitemapController::class)->middleware('throttle:30,1')->name('sitemap');
 
 Route::post('/locale/{locale}', LocaleController::class)->name('locale.update');
 
@@ -71,6 +84,7 @@ Route::middleware(['auth', 'confirmed', 'can:super-admin'])->prefix('admin')->na
     Route::livewire('/genres', 'pages::admin.genres.index')->name('genres.index');
     Route::livewire('/reports', 'pages::admin.reports.index')->name('reports.index');
     Route::livewire('/telegram', 'pages::admin.telegram')->name('telegram');
+    Route::post('/catalog/{type}/{id}/visibility', CatalogVisibilityController::class)->whereIn('type', ['books', 'people', 'publishers'])->whereNumber('id')->name('catalog.visibility');
     Route::livewire('/labels', 'pages::admin.labels.index')->name('labels.index');
     Route::livewire('/labels/create', 'pages::admin.labels.edit')->name('labels.create');
     Route::livewire('/labels/{labelTemplate}/edit', 'pages::admin.labels.edit')->name('labels.edit');

@@ -649,6 +649,9 @@ new class extends Component
                     @endif
                 </dl>
 
+                @if ($this->edition->isPubliclyListed())
+                    <a href="{{ $this->edition->publicUrl() }}" class="link mt-3 block text-xs">{{ __('Public page of this book') }}</a>
+                @endif
                 @if ($this->edition->isFromPublisher())
                     <p class="mt-3 text-xs text-ink-soft">✓ {{ __('Details from the publisher.') }}</p>
                 @elseif ($this->canEditEdition)

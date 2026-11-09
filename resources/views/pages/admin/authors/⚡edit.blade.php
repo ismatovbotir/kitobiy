@@ -148,6 +148,7 @@ new class extends Component {
 
     <a href="{{ route('admin.authors.index') }}" wire:navigate class="text-sm text-ink-soft hover:text-ink">← {{ __('People') }}</a>
     <h1 class="mt-1 font-serif text-3xl font-semibold">{{ $this->author->name }}</h1>
+    <a href="{{ $this->author->publicUrl() }}" class="link text-sm">{{ __('Public page') }}</a>
 
     <div class="mt-6 grid gap-6 lg:grid-cols-[1fr_22rem]">
         <form wire:submit="save" class="space-y-5 rounded-xl border border-ink/10 bg-white p-5">

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AppearsInCatalog;
 use App\Models\Concerns\HasNameAliases;
 use App\Models\Concerns\HasSearchName;
 use Database\Factories\PublisherFactory;
@@ -21,7 +22,7 @@ use InvalidArgumentException;
 class Publisher extends Model
 {
     /** @use HasFactory<PublisherFactory> */
-    use HasFactory, HasNameAliases, HasSearchName;
+    use AppearsInCatalog, HasFactory, HasNameAliases, HasSearchName;
 
     /**
      * Get the attributes that should be cast.
@@ -32,6 +33,7 @@ class Publisher extends Model
     {
         return [
             'is_verified' => 'boolean',
+            'hidden_from_catalog' => 'boolean',
         ];
     }
 
@@ -48,6 +50,11 @@ class Publisher extends Model
         }
 
         return static::findByNameOrAlias($name) ?? static::create(['name' => $name, 'is_verified' => false]);
+    }
+
+    protected function catalogRoute(): string
+    {
+        return 'catalog.publishers.show';
     }
 
     /**

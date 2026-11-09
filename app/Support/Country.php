@@ -58,6 +58,14 @@ class Country
     ];
 
     /**
+     * The country's name in the current locale.
+     */
+    public static function name(string $code): string
+    {
+        return __("countries.{$code}");
+    }
+
+    /**
      * Picker options in the current locale: the popular countries first, then all others A–Z.
      *
      * @return array{popular: array<string, string>, others: array<string, string>}

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AppearsInCatalog;
 use App\Models\Concerns\HasNameAliases;
 use App\Models\Concerns\HasSearchName;
 use Database\Factories\AuthorFactory;
@@ -21,7 +22,7 @@ use InvalidArgumentException;
 class Author extends Model
 {
     /** @use HasFactory<AuthorFactory> */
-    use HasFactory, HasNameAliases, HasSearchName;
+    use AppearsInCatalog, HasFactory, HasNameAliases, HasSearchName;
 
     /**
      * Get the attributes that should be cast.
@@ -34,6 +35,7 @@ class Author extends Model
             'birth_year' => 'integer',
             'death_year' => 'integer',
             'is_verified' => 'boolean',
+            'hidden_from_catalog' => 'boolean',
         ];
     }
 
@@ -43,6 +45,11 @@ class Author extends Model
     public static function findOrCreateByName(string $name): self
     {
         return static::findByNameOrAlias($name) ?? static::create(['name' => trim($name), 'is_verified' => false]);
+    }
+
+    protected function catalogRoute(): string
+    {
+        return 'catalog.people.show';
     }
 
     /**

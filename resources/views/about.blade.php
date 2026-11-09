@@ -45,6 +45,7 @@
             <a href="{{ route('home') }}"><x-wordmark /></a>
             <div class="flex flex-wrap items-center gap-3">
                 <x-locale-switcher />
+                <a href="{{ route('catalog.index') }}" class="link text-sm">{{ __('Catalog') }}</a>
                 @auth
                     <a href="{{ route('dashboard') }}" class="link text-sm">{{ __('Home') }}</a>
                 @else

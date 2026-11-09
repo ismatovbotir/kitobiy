@@ -28,6 +28,8 @@ return new class extends Migration
             $table->string('source', 32)->default('manual');
             $table->string('source_id')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            // Set by a super admin to keep the book off the public catalog pages.
+            $table->boolean('hidden_from_catalog')->default(false);
             $table->timestamps();
 
             $table->index('work_id');

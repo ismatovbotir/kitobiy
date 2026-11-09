@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ContributorRole;
 use App\Enums\EditionSource;
+use App\Support\PublicCatalog;
 use App\Support\SearchKey;
 use Database\Factories\EditionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -54,6 +55,7 @@ class Edition extends Model
             'source' => EditionSource::class,
             'published_year' => 'integer',
             'page_count' => 'integer',
+            'hidden_from_catalog' => 'boolean',
         ];
     }
 
@@ -131,6 +133,64 @@ class Edition extends Model
     public function isFromPublisher(): bool
     {
         return $this->source === EditionSource::Publisher;
+    }
+
+    /**
+     * Books on the public catalog pages: not hidden by a super admin, and a real
+     * published book (from its publisher or with an ISBN) or in several libraries,
+     * so a family's own unpublished papers never become public.
+     *
+     * @param  Builder<Edition>  $query
+     */
+    #[Scope]
+    protected function publiclyListed(Builder $query): void
+    {
+        $query->where('editions.hidden_from_catalog', false)
+            ->where(fn (Builder $inner) => $inner
+                ->where('editions.source', EditionSource::Publisher)
+                ->orWhereNotNull('editions.isbn_13')
+                ->orWhereNotNull('editions.isbn_10')
+                ->orWhereRaw('(select count(distinct copies.library_id) from copies where copies.edition_id = editions.id) >= ?', [PublicCatalog::MIN_LIBRARIES_WITHOUT_ISBN]));
+    }
+
+    public function isPubliclyListed(): bool
+    {
+        return static::query()->whereKey($this->getKey())->publiclyListed()->exists();
+    }
+
+    /**
+     * How many libraries hold a copy.
+     */
+    public function libraryCount(): int
+    {
+        return $this->copies()->distinct()->count('library_id');
+    }
+
+    /**
+     * Public books offered to search engines: the details come from the publisher
+     * or a book database, or several libraries agree on the book.
+     *
+     * @param  Builder<Edition>  $query
+     */
+    #[Scope]
+    protected function indexable(Builder $query): void
+    {
+        $query->publiclyListed()->where(fn (Builder $inner) => $inner
+            ->where('editions.source', '!=', EditionSource::Manual)
+            ->orWhereRaw('(select count(distinct copies.library_id) from copies where copies.edition_id = editions.id) >= ?', [PublicCatalog::MIN_LIBRARIES_WITHOUT_ISBN]));
+    }
+
+    public function isIndexable(): bool
+    {
+        return static::query()->whereKey($this->getKey())->indexable()->exists();
+    }
+
+    /**
+     * The public page address.
+     */
+    public function publicUrl(): string
+    {
+        return route('catalog.books.show', [$this, PublicCatalog::slug($this->title)]);
     }
 
     public function hasCover(): bool

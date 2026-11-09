@@ -98,6 +98,7 @@
         </div>
     </article>
 
+    <x-event-list class="mt-10" :events="$events" />
     <x-news-list class="mt-10" :posts="$news" />
 
     @if ($otherEditions->isNotEmpty())

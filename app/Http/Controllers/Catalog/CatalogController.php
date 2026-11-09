@@ -6,6 +6,7 @@ use App\Enums\ContributorRole;
 use App\Enums\EditionSource;
 use App\Http\Controllers\Controller;
 use App\Models\Author;
+use App\Models\BookEvent;
 use App\Models\Edition;
 use App\Models\Genre;
 use App\Models\Post;
@@ -98,6 +99,7 @@ class CatalogController extends Controller
                 ->get(),
             'indexable' => $edition->isIndexable(),
             'news' => $this->newsAbout('edition_id', $edition->id),
+            'events' => $this->upcomingEventsAbout('edition_id', $edition->id),
         ]);
     }
 
@@ -119,6 +121,7 @@ class CatalogController extends Controller
                 ->paginate(PublicCatalog::PER_PAGE),
             'indexable' => ! $author->hidden_from_catalog && $author->isIndexable(),
             'news' => $this->newsAbout('author_id', $author->id),
+            'events' => $this->upcomingEventsAbout('author_id', $author->id),
         ]);
     }
 
@@ -141,6 +144,7 @@ class CatalogController extends Controller
                 ->paginate(PublicCatalog::PER_PAGE),
             'indexable' => ! $publisher->hidden_from_catalog && $publisher->isIndexable(),
             'news' => $this->newsAbout('publisher_id', $publisher->id),
+            'events' => $this->upcomingEventsAbout('publisher_id', $publisher->id),
         ]);
     }
 
@@ -167,6 +171,17 @@ class CatalogController extends Controller
     private function newsAbout(string $column, int $id): Collection
     {
         return Post::query()->published()->where($column, $id)->latest('published_at')->limit(3)->get();
+    }
+
+    /**
+     * The next published events about a book, person or publisher.
+     *
+     * @param  'edition_id'|'author_id'|'publisher_id'  $column
+     * @return Collection<int, BookEvent>
+     */
+    private function upcomingEventsAbout(string $column, int $id): Collection
+    {
+        return BookEvent::query()->published()->upcoming()->where($column, $id)->oldest('starts_at')->limit(4)->get();
     }
 
     /**

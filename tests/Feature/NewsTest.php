@@ -77,7 +77,7 @@ class NewsTest extends TestCase
             ->set('bodyUz', 'Matn')
             ->set('publisherName', 'Sharq')
             ->set('bookIsbn', '978-9943-000-00-1')
-            ->set('image', UploadedFile::fake()->image('cover.jpg', 1600, 900))
+            ->set('image', UploadedFile::fake()->image('cover.jpg', 1300, 600))
             ->call('save')
             ->assertHasNoErrors();
 

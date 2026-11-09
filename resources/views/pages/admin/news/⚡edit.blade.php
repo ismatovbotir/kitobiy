@@ -1,13 +1,9 @@
 <?php
 
-use App\Models\Author;
-use App\Models\Edition;
 use App\Models\Post;
-use App\Models\Publisher;
 use App\Services\CoverImage;
+use App\Support\Concerns\PicksRelatedCatalogRecords;
 use App\Support\Concerns\RequiresSuperAdmin;
-use App\Support\Concerns\SuggestsContributorNames;
-use App\Support\Concerns\SuggestsPublisherNames;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
@@ -15,7 +11,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 
 new class extends Component {
-    use RequiresSuperAdmin, SuggestsContributorNames, SuggestsPublisherNames, WithFileUploads;
+    use PicksRelatedCatalogRecords, RequiresSuperAdmin, WithFileUploads;
 
     public const int IMAGE_MAX_WIDTH = 1200;
 
@@ -35,13 +31,6 @@ new class extends Component {
     /** Local time (app timezone) from a datetime-local input; empty = draft. */
     public string $publishedAt = '';
 
-    /** What the post is about: an existing publisher, person or book (by ISBN). */
-    public string $publisherName = '';
-
-    public string $authorName = '';
-
-    public string $bookIsbn = '';
-
     /** @var \Livewire\Features\SupportFileUploads\TemporaryUploadedFile|null */
     public $image = null;
 
@@ -58,9 +47,7 @@ new class extends Component {
         $this->bodyUz = $post->body_uz;
         $this->bodyRu = (string) $post->body_ru;
         $this->publishedAt = $post->published_at?->timezone(config('app.timezone'))->format('Y-m-d\TH:i') ?? '';
-        $this->publisherName = (string) $post->publisher?->name;
-        $this->authorName = (string) $post->author?->name;
-        $this->bookIsbn = (string) ($post->edition?->isbn_13 ?? $post->edition?->isbn_10);
+        $this->fillRelatedFrom($post);
     }
 
     public function save(): void
@@ -103,9 +90,7 @@ new class extends Component {
             'bodyUz' => ['required', 'string', 'max:20000'],
             'bodyRu' => ['nullable', 'string', 'max:20000', 'required_with:titleRu'],
             'publishedAt' => ['nullable', 'date'],
-            'publisherName' => ['nullable', 'string', 'max:255'],
-            'authorName' => ['nullable', 'string', 'max:255'],
-            'bookIsbn' => ['nullable', 'string', 'max:20'],
+            ...$this->relatedRules(),
             'image' => ['nullable', 'mimes:jpeg,png,webp', 'max:10240', Rule::dimensions()->minWidth(300)->minHeight(200)->maxWidth(6000)->maxHeight(6000)],
         ], attributes: [
             'titleUz' => __('Title in Uzbek'),
@@ -114,7 +99,7 @@ new class extends Component {
             'bodyRu' => __('Text in Russian'),
         ]);
 
-        $related = $this->related();
+        $related = $this->relatedCatalogIds();
 
         if ($related === null) {
             return;
@@ -158,39 +143,6 @@ new class extends Component {
             default => __('Draft saved.'),
         });
         $this->redirectRoute('admin.news.edit', $post, navigate: true);
-    }
-
-    /**
-     * The publisher, person and book the post is about, found by name or ISBN.
-     * Adds an error and returns null when one of them is not in the catalog.
-     *
-     * @return array{publisher_id: int|null, author_id: int|null, edition_id: int|null}|null
-     */
-    private function related(): ?array
-    {
-        $publisher = trim($this->publisherName) !== '' ? Publisher::findByNameOrAlias($this->publisherName) : null;
-        $author = trim($this->authorName) !== '' ? Author::findByNameOrAlias($this->authorName) : null;
-        $edition = trim($this->bookIsbn) !== '' ? Edition::query()->whereIsbn($this->bookIsbn)->first() : null;
-
-        foreach ([
-            'publisherName' => [$this->publisherName, $publisher, __('There is no publisher with this name in the catalog.')],
-            'authorName' => [$this->authorName, $author, __('There is no person with this name in the catalog.')],
-            'bookIsbn' => [$this->bookIsbn, $edition, __('There is no book with this ISBN in the catalog.')],
-        ] as $field => [$typed, $found, $error]) {
-            if (trim($typed) !== '' && $found === null) {
-                $this->addError($field, $error);
-            }
-        }
-
-        if ($this->getErrorBag()->isNotEmpty()) {
-            return null;
-        }
-
-        return [
-            'publisher_id' => $publisher?->id,
-            'author_id' => $author?->id,
-            'edition_id' => $edition?->id,
-        ];
     }
 
     public function render()
@@ -260,26 +212,7 @@ new class extends Component {
             </div>
         </section>
 
-        <section class="space-y-4 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
-            <h2 class="font-serif text-xl font-semibold">{{ __('About') }} <span class="text-sm font-normal text-ink-soft">{{ __('(optional; the post also appears on these pages)') }}</span></h2>
-            <div class="grid gap-4 sm:grid-cols-3">
-                <div>
-                    <label for="publisherName" class="form-label">{{ __('Publisher') }}</label>
-                    <x-publisher-input id="publisherName" wire:model="publisherName" />
-                    @error('publisherName') <p class="form-error">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label for="authorName" class="form-label">{{ __('Person') }}</label>
-                    <x-people-input id="authorName" wire:model="authorName" />
-                    @error('authorName') <p class="form-error">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label for="bookIsbn" class="form-label">{{ __('Book ISBN') }}</label>
-                    <input wire:model="bookIsbn" id="bookIsbn" type="text" inputmode="numeric" maxlength="20" class="form-input">
-                    @error('bookIsbn') <p class="form-error">{{ $message }}</p> @enderror
-                </div>
-            </div>
-        </section>
+        <x-admin-related-fields :hint="__('(optional; the post also appears on these pages)')" />
 
         <section class="space-y-4 rounded-xl border border-ink/10 bg-white p-4 sm:p-6">
             <h2 class="font-serif text-xl font-semibold">{{ __('Publishing') }}</h2>

@@ -7,6 +7,7 @@
         ['route' => 'admin.genres.index', 'active' => 'admin.genres.*', 'label' => __('Genres')],
         ['route' => 'admin.labels.index', 'active' => 'admin.labels.*', 'label' => __('Labels')],
         ['route' => 'admin.news.index', 'active' => 'admin.news.*', 'label' => __('News')],
+        ['route' => 'admin.events.index', 'active' => 'admin.events.*', 'label' => __('Events')],
         ['route' => 'admin.reports.index', 'active' => 'admin.reports.*', 'label' => __('Reports')],
         ['route' => 'admin.telegram', 'active' => 'admin.telegram', 'label' => __('Telegram')],
     ])->filter(fn (array $link): bool => Route::has($link['route']));

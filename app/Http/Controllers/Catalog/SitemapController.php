@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Catalog;
 
 use App\Http\Controllers\Controller;
 use App\Models\Author;
+use App\Models\BookEvent;
 use App\Models\Edition;
 use App\Models\Genre;
 use App\Models\Post;
@@ -39,7 +40,12 @@ class SitemapController extends Controller
             ['loc' => route('about'), 'lastmod' => null],
             ['loc' => route('catalog.index'), 'lastmod' => null],
             ['loc' => route('news.index'), 'lastmod' => null],
+            ['loc' => route('events.index'), 'lastmod' => null],
         ];
+
+        foreach (BookEvent::query()->published()->latest('starts_at')->get() as $event) {
+            $urls[] = ['loc' => $event->publicUrl(), 'lastmod' => $event->updated_at?->toDateString()];
+        }
 
         foreach (Post::query()->published()->latest('published_at')->get() as $post) {
             $urls[] = ['loc' => $post->publicUrl(), 'lastmod' => $post->updated_at?->toDateString()];

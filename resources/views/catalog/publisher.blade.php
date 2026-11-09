@@ -17,6 +17,7 @@
         <p class="mt-2 text-sm text-ink-soft">✓ {{ __('The publisher keeps this book list itself.') }}</p>
     @endif
 
+    <x-event-list class="mt-10" :events="$events" />
     <x-news-list class="mt-10" :posts="$news" />
 
     <h2 class="mt-8 font-serif text-xl font-semibold">{{ __('Books') }}</h2>

@@ -28,11 +28,7 @@ class NewsController extends Controller
 
         return view('news.show', [
             'post' => $post,
-            'related' => array_filter([
-                $post->publisher?->isPubliclyListed() ? ['label' => __('Publisher'), 'name' => $post->publisher->name, 'url' => $post->publisher->publicUrl()] : null,
-                $post->author?->isPubliclyListed() ? ['label' => __('Author'), 'name' => $post->author->name, 'url' => $post->author->publicUrl()] : null,
-                $post->edition?->isPubliclyListed() ? ['label' => __('Book'), 'name' => $post->edition->title, 'url' => $post->edition->publicUrl()] : null,
-            ]),
+            'related' => $post->relatedLinks(),
             'morePosts' => Post::query()->published()->whereKeyNot($post->id)->latest('published_at')->limit(3)->get(),
         ]);
     }
